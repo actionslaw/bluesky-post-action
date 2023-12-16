@@ -4,10 +4,9 @@ Github Action to send Bluesky posts.
 
 ## Workflow Usage
 
-Configure your workflow to use `ethomson/send-tweet-action@v1`, and provide the tweet you want to send as the `status` input.
+Configure your workflow to use `rg-wood/bluesky-post-action@v1`, and provide the post you want to send as the `text` input.
 
-Provide the service host, username and passwor as the `service`, `identifier`, and
-`password` inputs.
+Provide the service host, username and password as the `service`, `identifier`, and `password` inputs.
 
 For example:
 
@@ -40,4 +39,3 @@ For example:
   "uri": "at://did:plc:kc6lo2m2mfjzj54humjq4usg/app.bsky.feed.post/3kgoijihwtb2f"
 }
 ```
-
