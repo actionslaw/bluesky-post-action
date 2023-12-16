@@ -1,0 +1,20 @@
+name: Send and Reply BlueSky Action
+description: Post or reply to a tweet to Twitter during a GitHub Actions workflow.
+author: Ric Wood
+inputs:
+  text:
+    description: The text to post.
+  replyto:
+    description: Optional CID of the post to reply to.
+  service:
+    description: AT Protocol service host.
+  identifier:
+    description: User identifier.
+  password:
+    description: User password.
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+branding:
+  icon: edit
+  color: blue
