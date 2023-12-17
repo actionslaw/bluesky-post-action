@@ -1,6 +1,6 @@
 {
   "name": "bluesky-post-action",
-  "version": "0.7",
+  "version": "0.8",
   "private": true,
   "description": "A GitHub Action to post to Bluesky Social",
   "keywords": [
@@ -24,7 +24,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "build": "esbuild --bundle src/index.js --outfile=dist/index.js --platform=node --target=node14.0",
+    "build": "esbuild --bundle src/index.js --outfile=dist/index.js --platform=node --target=node14.0 --format=esm",
     "postinstall": "husky install",
     "lint": "eslint .",
     "start": "node src/index.js",
