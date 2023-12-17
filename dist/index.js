@@ -11504,25 +11504,22 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       COM_ATPROTO_ADMIN: () => COM_ATPROTO_ADMIN,
       COM_ATPROTO_MODERATION: () => COM_ATPROTO_MODERATION,
       ComAtprotoAdminDefs: () => defs_exports,
+      ComAtprotoAdminDeleteAccount: () => deleteAccount_exports,
       ComAtprotoAdminDisableAccountInvites: () => disableAccountInvites_exports,
       ComAtprotoAdminDisableInviteCodes: () => disableInviteCodes_exports,
+      ComAtprotoAdminEmitModerationEvent: () => emitModerationEvent_exports,
       ComAtprotoAdminEnableAccountInvites: () => enableAccountInvites_exports,
       ComAtprotoAdminGetAccountInfo: () => getAccountInfo_exports,
       ComAtprotoAdminGetInviteCodes: () => getInviteCodes_exports,
-      ComAtprotoAdminGetModerationAction: () => getModerationAction_exports,
-      ComAtprotoAdminGetModerationActions: () => getModerationActions_exports,
-      ComAtprotoAdminGetModerationReport: () => getModerationReport_exports,
-      ComAtprotoAdminGetModerationReports: () => getModerationReports_exports,
+      ComAtprotoAdminGetModerationEvent: () => getModerationEvent_exports,
       ComAtprotoAdminGetRecord: () => getRecord_exports,
       ComAtprotoAdminGetRepo: () => getRepo_exports,
       ComAtprotoAdminGetSubjectStatus: () => getSubjectStatus_exports,
-      ComAtprotoAdminResolveModerationReports: () =>
-        resolveModerationReports_exports,
-      ComAtprotoAdminReverseModerationAction: () =>
-        reverseModerationAction_exports,
+      ComAtprotoAdminQueryModerationEvents: () => queryModerationEvents_exports,
+      ComAtprotoAdminQueryModerationStatuses: () =>
+        queryModerationStatuses_exports,
       ComAtprotoAdminSearchRepos: () => searchRepos_exports,
       ComAtprotoAdminSendEmail: () => sendEmail_exports,
-      ComAtprotoAdminTakeModerationAction: () => takeModerationAction_exports,
       ComAtprotoAdminUpdateAccountEmail: () => updateAccountEmail_exports,
       ComAtprotoAdminUpdateAccountHandle: () => updateAccountHandle_exports,
       ComAtprotoAdminUpdateSubjectStatus: () => updateSubjectStatus_exports,
@@ -11549,7 +11546,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       ComAtprotoServerCreateInviteCodes: () => createInviteCodes_exports,
       ComAtprotoServerCreateSession: () => createSession_exports,
       ComAtprotoServerDefs: () => defs_exports4,
-      ComAtprotoServerDeleteAccount: () => deleteAccount_exports,
+      ComAtprotoServerDeleteAccount: () => deleteAccount_exports2,
       ComAtprotoServerDeleteSession: () => deleteSession_exports,
       ComAtprotoServerDescribeServer: () => describeServer_exports,
       ComAtprotoServerGetAccountInviteCodes: () =>
@@ -11578,6 +11575,10 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       ComAtprotoSyncNotifyOfUpdate: () => notifyOfUpdate_exports,
       ComAtprotoSyncRequestCrawl: () => requestCrawl_exports,
       ComAtprotoSyncSubscribeRepos: () => subscribeRepos_exports,
+      ComAtprotoTempFetchLabels: () => fetchLabels_exports,
+      ComAtprotoTempImportRepo: () => importRepo_exports,
+      ComAtprotoTempPushBlob: () => pushBlob_exports,
+      ComAtprotoTempTransferAccount: () => transferAccount_exports,
       ComNS: () => ComNS,
       EmbedNS: () => EmbedNS,
       FeedNS: () => FeedNS,
@@ -11604,6 +11605,7 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
       RichtextNS: () => RichtextNS,
       ServerNS: () => ServerNS,
       SyncNS: () => SyncNS,
+      TempNS: () => TempNS,
       ThreadgateRecord: () => ThreadgateRecord,
       UnicodeString: () => UnicodeString,
       UnspeccedNS: () => UnspeccedNS,
@@ -11780,13 +11782,13 @@ import { createRequire as __WEBPACK_EXTERNAL_createRequire } from 'module'
         throw new Error('ATURI requires at least method and authority sections')
       }
       try {
-        ensureValidHandle(parts[2])
-      } catch {
-        try {
+        if (parts[2].startsWith('did:')) {
           ensureValidDid(parts[2])
-        } catch {
-          throw new Error('ATURI authority must be a valid handle or DID')
+        } else {
+          ensureValidHandle(parts[2])
         }
+      } catch {
+        throw new Error('ATURI authority must be a valid handle or DID')
       }
       if (parts.length >= 4) {
         if (parts[3].length == 0) {
@@ -17261,7 +17263,7 @@ if (cid) {
         return {
           success: false,
           error: new ValidationError(
-            `${path} must be an iso8601 formatted datetime`
+            `${path} must be an valid atproto datetime (both RFC-3339 and ISO-8601)`
           )
         }
       }
@@ -18858,30 +18860,33 @@ if (cid) {
               }
             }
           },
-          actionView: {
+          modEventView: {
             type: 'object',
             required: [
               'id',
-              'action',
+              'event',
               'subject',
               'subjectBlobCids',
-              'reason',
               'createdBy',
-              'createdAt',
-              'resolvedReportIds'
+              'createdAt'
             ],
             properties: {
               id: {
                 type: 'integer'
               },
-              action: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionType'
-              },
-              durationInHours: {
-                type: 'integer',
-                description:
-                  'Indicates how long this action was meant to be in effect before automatically expiring.'
+              event: {
+                type: 'union',
+                refs: [
+                  'lex:com.atproto.admin.defs#modEventTakedown',
+                  'lex:com.atproto.admin.defs#modEventReverseTakedown',
+                  'lex:com.atproto.admin.defs#modEventComment',
+                  'lex:com.atproto.admin.defs#modEventReport',
+                  'lex:com.atproto.admin.defs#modEventLabel',
+                  'lex:com.atproto.admin.defs#modEventAcknowledge',
+                  'lex:com.atproto.admin.defs#modEventEscalate',
+                  'lex:com.atproto.admin.defs#modEventMute',
+                  'lex:com.atproto.admin.defs#modEventEmail'
+                ]
               },
               subject: {
                 type: 'union',
@@ -18896,21 +18901,6 @@ if (cid) {
                   type: 'string'
                 }
               },
-              createLabelVals: {
-                type: 'array',
-                items: {
-                  type: 'string'
-                }
-              },
-              negateLabelVals: {
-                type: 'array',
-                items: {
-                  type: 'string'
-                }
-              },
-              reason: {
-                type: 'string'
-              },
               createdBy: {
                 type: 'string',
                 format: 'did'
@@ -18919,42 +18909,40 @@ if (cid) {
                 type: 'string',
                 format: 'datetime'
               },
-              reversal: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionReversal'
+              creatorHandle: {
+                type: 'string'
               },
-              resolvedReportIds: {
-                type: 'array',
-                items: {
-                  type: 'integer'
-                }
+              subjectHandle: {
+                type: 'string'
               }
             }
           },
-          actionViewDetail: {
+          modEventViewDetail: {
             type: 'object',
             required: [
               'id',
-              'action',
+              'event',
               'subject',
               'subjectBlobs',
-              'reason',
               'createdBy',
-              'createdAt',
-              'resolvedReports'
+              'createdAt'
             ],
             properties: {
               id: {
                 type: 'integer'
               },
-              action: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionType'
-              },
-              durationInHours: {
-                type: 'integer',
-                description:
-                  'Indicates how long this action was meant to be in effect before automatically expiring.'
+              event: {
+                type: 'union',
+                refs: [
+                  'lex:com.atproto.admin.defs#modEventTakedown',
+                  'lex:com.atproto.admin.defs#modEventReverseTakedown',
+                  'lex:com.atproto.admin.defs#modEventComment',
+                  'lex:com.atproto.admin.defs#modEventReport',
+                  'lex:com.atproto.admin.defs#modEventLabel',
+                  'lex:com.atproto.admin.defs#modEventAcknowledge',
+                  'lex:com.atproto.admin.defs#modEventEscalate',
+                  'lex:com.atproto.admin.defs#modEventMute'
+                ]
               },
               subject: {
                 type: 'union',
@@ -18972,67 +18960,6 @@ if (cid) {
                   ref: 'lex:com.atproto.admin.defs#blobView'
                 }
               },
-              createLabelVals: {
-                type: 'array',
-                items: {
-                  type: 'string'
-                }
-              },
-              negateLabelVals: {
-                type: 'array',
-                items: {
-                  type: 'string'
-                }
-              },
-              reason: {
-                type: 'string'
-              },
-              createdBy: {
-                type: 'string',
-                format: 'did'
-              },
-              createdAt: {
-                type: 'string',
-                format: 'datetime'
-              },
-              reversal: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionReversal'
-              },
-              resolvedReports: {
-                type: 'array',
-                items: {
-                  type: 'ref',
-                  ref: 'lex:com.atproto.admin.defs#reportView'
-                }
-              }
-            }
-          },
-          actionViewCurrent: {
-            type: 'object',
-            required: ['id', 'action'],
-            properties: {
-              id: {
-                type: 'integer'
-              },
-              action: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionType'
-              },
-              durationInHours: {
-                type: 'integer',
-                description:
-                  'Indicates how long this action was meant to be in effect before automatically expiring.'
-              }
-            }
-          },
-          actionReversal: {
-            type: 'object',
-            required: ['reason', 'createdBy', 'createdAt'],
-            properties: {
-              reason: {
-                type: 'string'
-              },
               createdBy: {
                 type: 'string',
                 format: 'did'
@@ -19042,35 +18969,6 @@ if (cid) {
                 format: 'datetime'
               }
             }
-          },
-          actionType: {
-            type: 'string',
-            knownValues: [
-              'lex:com.atproto.admin.defs#takedown',
-              'lex:com.atproto.admin.defs#flag',
-              'lex:com.atproto.admin.defs#acknowledge',
-              'lex:com.atproto.admin.defs#escalate'
-            ]
-          },
-          takedown: {
-            type: 'token',
-            description:
-              'Moderation action type: Takedown. Indicates that content should not be served by the PDS.'
-          },
-          flag: {
-            type: 'token',
-            description:
-              'Moderation action type: Flag. Indicates that the content was reviewed and considered to violate PDS rules, but may still be served.'
-          },
-          acknowledge: {
-            type: 'token',
-            description:
-              'Moderation action type: Acknowledge. Indicates that the content was reviewed and not considered to violate PDS rules.'
-          },
-          escalate: {
-            type: 'token',
-            description:
-              'Moderation action type: Escalate. Indicates that the content has been flagged for additional review.'
           },
           reportView: {
             type: 'object',
@@ -19090,7 +18988,7 @@ if (cid) {
                 type: 'ref',
                 ref: 'lex:com.atproto.moderation.defs#reasonType'
               },
-              reason: {
+              comment: {
                 type: 'string'
               },
               subjectRepoHandle: {
@@ -19119,6 +19017,81 @@ if (cid) {
               }
             }
           },
+          subjectStatusView: {
+            type: 'object',
+            required: [
+              'id',
+              'subject',
+              'createdAt',
+              'updatedAt',
+              'reviewState'
+            ],
+            properties: {
+              id: {
+                type: 'integer'
+              },
+              subject: {
+                type: 'union',
+                refs: [
+                  'lex:com.atproto.admin.defs#repoRef',
+                  'lex:com.atproto.repo.strongRef'
+                ]
+              },
+              subjectBlobCids: {
+                type: 'array',
+                items: {
+                  type: 'string',
+                  format: 'cid'
+                }
+              },
+              subjectRepoHandle: {
+                type: 'string'
+              },
+              updatedAt: {
+                type: 'string',
+                format: 'datetime',
+                description:
+                  'Timestamp referencing when the last update was made to the moderation status of the subject'
+              },
+              createdAt: {
+                type: 'string',
+                format: 'datetime',
+                description:
+                  'Timestamp referencing the first moderation status impacting event was emitted on the subject'
+              },
+              reviewState: {
+                type: 'ref',
+                ref: 'lex:com.atproto.admin.defs#subjectReviewState'
+              },
+              comment: {
+                type: 'string',
+                description: 'Sticky comment on the subject.'
+              },
+              muteUntil: {
+                type: 'string',
+                format: 'datetime'
+              },
+              lastReviewedBy: {
+                type: 'string',
+                format: 'did'
+              },
+              lastReviewedAt: {
+                type: 'string',
+                format: 'datetime'
+              },
+              lastReportedAt: {
+                type: 'string',
+                format: 'datetime'
+              },
+              takendown: {
+                type: 'boolean'
+              },
+              suspendUntil: {
+                type: 'string',
+                format: 'datetime'
+              }
+            }
+          },
           reportViewDetail: {
             type: 'object',
             required: [
@@ -19137,7 +19110,7 @@ if (cid) {
                 type: 'ref',
                 ref: 'lex:com.atproto.moderation.defs#reasonType'
               },
-              reason: {
+              comment: {
                 type: 'string'
               },
               subject: {
@@ -19148,6 +19121,10 @@ if (cid) {
                   'lex:com.atproto.admin.defs#recordView',
                   'lex:com.atproto.admin.defs#recordViewNotFound'
                 ]
+              },
+              subjectStatus: {
+                type: 'ref',
+                ref: 'lex:com.atproto.admin.defs#subjectStatusView'
               },
               reportedBy: {
                 type: 'string',
@@ -19161,7 +19138,7 @@ if (cid) {
                 type: 'array',
                 items: {
                   type: 'ref',
-                  ref: 'lex:com.atproto.admin.defs#actionView'
+                  ref: 'lex:com.atproto.admin.defs#modEventView'
                 }
               }
             }
@@ -19271,6 +19248,10 @@ if (cid) {
               },
               inviteNote: {
                 type: 'string'
+              },
+              emailConfirmedAt: {
+                type: 'string',
+                format: 'datetime'
               }
             }
           },
@@ -19306,6 +19287,10 @@ if (cid) {
               },
               invitesDisabled: {
                 type: 'boolean'
+              },
+              emailConfirmedAt: {
+                type: 'string',
+                format: 'datetime'
               },
               inviteNote: {
                 type: 'string'
@@ -19458,33 +19443,18 @@ if (cid) {
           moderation: {
             type: 'object',
             properties: {
-              currentAction: {
+              subjectStatus: {
                 type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionViewCurrent'
+                ref: 'lex:com.atproto.admin.defs#subjectStatusView'
               }
             }
           },
           moderationDetail: {
             type: 'object',
-            required: ['actions', 'reports'],
             properties: {
-              currentAction: {
+              subjectStatus: {
                 type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionViewCurrent'
-              },
-              actions: {
-                type: 'array',
-                items: {
-                  type: 'ref',
-                  ref: 'lex:com.atproto.admin.defs#actionView'
-                }
-              },
-              reports: {
-                type: 'array',
-                items: {
-                  type: 'ref',
-                  ref: 'lex:com.atproto.admin.defs#reportView'
-                }
+                ref: 'lex:com.atproto.admin.defs#subjectStatusView'
               }
             }
           },
@@ -19545,6 +19515,178 @@ if (cid) {
                 type: 'integer'
               }
             }
+          },
+          subjectReviewState: {
+            type: 'string',
+            knownValues: [
+              'lex:com.atproto.admin.defs#reviewOpen',
+              'lex:com.atproto.admin.defs#reviewEscalated',
+              'lex:com.atproto.admin.defs#reviewClosed'
+            ]
+          },
+          reviewOpen: {
+            type: 'token',
+            description:
+              'Moderator review status of a subject: Open. Indicates that the subject needs to be reviewed by a moderator'
+          },
+          reviewEscalated: {
+            type: 'token',
+            description:
+              'Moderator review status of a subject: Escalated. Indicates that the subject was escalated for review by a moderator'
+          },
+          reviewClosed: {
+            type: 'token',
+            description:
+              'Moderator review status of a subject: Closed. Indicates that the subject was already reviewed and resolved by a moderator'
+          },
+          modEventTakedown: {
+            type: 'object',
+            description: 'Take down a subject permanently or temporarily',
+            properties: {
+              comment: {
+                type: 'string'
+              },
+              durationInHours: {
+                type: 'integer',
+                description:
+                  'Indicates how long the takedown should be in effect before automatically expiring.'
+              }
+            }
+          },
+          modEventReverseTakedown: {
+            type: 'object',
+            description: 'Revert take down action on a subject',
+            properties: {
+              comment: {
+                type: 'string',
+                description: 'Describe reasoning behind the reversal.'
+              }
+            }
+          },
+          modEventComment: {
+            type: 'object',
+            description: 'Add a comment to a subject',
+            required: ['comment'],
+            properties: {
+              comment: {
+                type: 'string'
+              },
+              sticky: {
+                type: 'boolean',
+                description: 'Make the comment persistent on the subject'
+              }
+            }
+          },
+          modEventReport: {
+            type: 'object',
+            description: 'Report a subject',
+            required: ['reportType'],
+            properties: {
+              comment: {
+                type: 'string'
+              },
+              reportType: {
+                type: 'ref',
+                ref: 'lex:com.atproto.moderation.defs#reasonType'
+              }
+            }
+          },
+          modEventLabel: {
+            type: 'object',
+            description: 'Apply/Negate labels on a subject',
+            required: ['createLabelVals', 'negateLabelVals'],
+            properties: {
+              comment: {
+                type: 'string'
+              },
+              createLabelVals: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              },
+              negateLabelVals: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                }
+              }
+            }
+          },
+          modEventAcknowledge: {
+            type: 'object',
+            properties: {
+              comment: {
+                type: 'string'
+              }
+            }
+          },
+          modEventEscalate: {
+            type: 'object',
+            properties: {
+              comment: {
+                type: 'string'
+              }
+            }
+          },
+          modEventMute: {
+            type: 'object',
+            description: 'Mute incoming reports on a subject',
+            required: ['durationInHours'],
+            properties: {
+              comment: {
+                type: 'string'
+              },
+              durationInHours: {
+                type: 'integer',
+                description:
+                  'Indicates how long the subject should remain muted.'
+              }
+            }
+          },
+          modEventUnmute: {
+            type: 'object',
+            description: 'Unmute action on a subject',
+            properties: {
+              comment: {
+                type: 'string',
+                description: 'Describe reasoning behind the reversal.'
+              }
+            }
+          },
+          modEventEmail: {
+            type: 'object',
+            description: 'Keep a log of outgoing email to a user',
+            required: ['subjectLine'],
+            properties: {
+              subjectLine: {
+                type: 'string',
+                description: 'The subject line of the email sent to the user.'
+              }
+            }
+          }
+        }
+      },
+      ComAtprotoAdminDeleteAccount: {
+        lexicon: 1,
+        id: 'com.atproto.admin.deleteAccount',
+        defs: {
+          main: {
+            type: 'procedure',
+            description: 'Delete a user account as an administrator.',
+            input: {
+              encoding: 'application/json',
+              schema: {
+                type: 'object',
+                required: ['did'],
+                properties: {
+                  did: {
+                    type: 'string',
+                    format: 'did'
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -19555,7 +19697,7 @@ if (cid) {
           main: {
             type: 'procedure',
             description:
-              'Disable an account from receiving new invite codes, but does not invalidate existing codes',
+              'Disable an account from receiving new invite codes, but does not invalidate existing codes.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -19568,8 +19710,7 @@ if (cid) {
                   },
                   note: {
                     type: 'string',
-                    description:
-                      'Additionally add a note describing why the invites were disabled'
+                    description: 'Optional reason for disabled invites.'
                   }
                 }
               }
@@ -19584,7 +19725,7 @@ if (cid) {
           main: {
             type: 'procedure',
             description:
-              'Disable some set of codes and/or all codes associated with a set of users',
+              'Disable some set of codes and/or all codes associated with a set of users.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -19608,6 +19749,70 @@ if (cid) {
           }
         }
       },
+      ComAtprotoAdminEmitModerationEvent: {
+        lexicon: 1,
+        id: 'com.atproto.admin.emitModerationEvent',
+        defs: {
+          main: {
+            type: 'procedure',
+            description: 'Take a moderation action on an actor.',
+            input: {
+              encoding: 'application/json',
+              schema: {
+                type: 'object',
+                required: ['event', 'subject', 'createdBy'],
+                properties: {
+                  event: {
+                    type: 'union',
+                    refs: [
+                      'lex:com.atproto.admin.defs#modEventTakedown',
+                      'lex:com.atproto.admin.defs#modEventAcknowledge',
+                      'lex:com.atproto.admin.defs#modEventEscalate',
+                      'lex:com.atproto.admin.defs#modEventComment',
+                      'lex:com.atproto.admin.defs#modEventLabel',
+                      'lex:com.atproto.admin.defs#modEventReport',
+                      'lex:com.atproto.admin.defs#modEventMute',
+                      'lex:com.atproto.admin.defs#modEventReverseTakedown',
+                      'lex:com.atproto.admin.defs#modEventUnmute',
+                      'lex:com.atproto.admin.defs#modEventEmail'
+                    ]
+                  },
+                  subject: {
+                    type: 'union',
+                    refs: [
+                      'lex:com.atproto.admin.defs#repoRef',
+                      'lex:com.atproto.repo.strongRef'
+                    ]
+                  },
+                  subjectBlobCids: {
+                    type: 'array',
+                    items: {
+                      type: 'string',
+                      format: 'cid'
+                    }
+                  },
+                  createdBy: {
+                    type: 'string',
+                    format: 'did'
+                  }
+                }
+              }
+            },
+            output: {
+              encoding: 'application/json',
+              schema: {
+                type: 'ref',
+                ref: 'lex:com.atproto.admin.defs#modEventView'
+              }
+            },
+            errors: [
+              {
+                name: 'SubjectHasAction'
+              }
+            ]
+          }
+        }
+      },
       ComAtprotoAdminEnableAccountInvites: {
         lexicon: 1,
         id: 'com.atproto.admin.enableAccountInvites',
@@ -19615,7 +19820,7 @@ if (cid) {
           main: {
             type: 'procedure',
             description:
-              'Re-enable an accounts ability to receive invite codes',
+              "Re-enable an account's ability to receive invite codes.",
             input: {
               encoding: 'application/json',
               schema: {
@@ -19628,8 +19833,7 @@ if (cid) {
                   },
                   note: {
                     type: 'string',
-                    description:
-                      'Additionally add a note describing why the invites were enabled'
+                    description: 'Optional reason for enabled invites.'
                   }
                 }
               }
@@ -19643,7 +19847,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'View details about an account.',
+            description: 'Get details about an account.',
             parameters: {
               type: 'params',
               required: ['did'],
@@ -19670,7 +19874,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Admin view of invite codes',
+            description: 'Get an admin view of invite codes.',
             parameters: {
               type: 'params',
               properties: {
@@ -19712,13 +19916,13 @@ if (cid) {
           }
         }
       },
-      ComAtprotoAdminGetModerationAction: {
+      ComAtprotoAdminGetModerationEvent: {
         lexicon: 1,
-        id: 'com.atproto.admin.getModerationAction',
+        id: 'com.atproto.admin.getModerationEvent',
         defs: {
           main: {
             type: 'query',
-            description: 'View details about a moderation action.',
+            description: 'Get details about a moderation event.',
             parameters: {
               type: 'params',
               required: ['id'],
@@ -19732,161 +19936,7 @@ if (cid) {
               encoding: 'application/json',
               schema: {
                 type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionViewDetail'
-              }
-            }
-          }
-        }
-      },
-      ComAtprotoAdminGetModerationActions: {
-        lexicon: 1,
-        id: 'com.atproto.admin.getModerationActions',
-        defs: {
-          main: {
-            type: 'query',
-            description: 'List moderation actions related to a subject.',
-            parameters: {
-              type: 'params',
-              properties: {
-                subject: {
-                  type: 'string'
-                },
-                limit: {
-                  type: 'integer',
-                  minimum: 1,
-                  maximum: 100,
-                  default: 50
-                },
-                cursor: {
-                  type: 'string'
-                }
-              }
-            },
-            output: {
-              encoding: 'application/json',
-              schema: {
-                type: 'object',
-                required: ['actions'],
-                properties: {
-                  cursor: {
-                    type: 'string'
-                  },
-                  actions: {
-                    type: 'array',
-                    items: {
-                      type: 'ref',
-                      ref: 'lex:com.atproto.admin.defs#actionView'
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      ComAtprotoAdminGetModerationReport: {
-        lexicon: 1,
-        id: 'com.atproto.admin.getModerationReport',
-        defs: {
-          main: {
-            type: 'query',
-            description: 'View details about a moderation report.',
-            parameters: {
-              type: 'params',
-              required: ['id'],
-              properties: {
-                id: {
-                  type: 'integer'
-                }
-              }
-            },
-            output: {
-              encoding: 'application/json',
-              schema: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#reportViewDetail'
-              }
-            }
-          }
-        }
-      },
-      ComAtprotoAdminGetModerationReports: {
-        lexicon: 1,
-        id: 'com.atproto.admin.getModerationReports',
-        defs: {
-          main: {
-            type: 'query',
-            description: 'List moderation reports related to a subject.',
-            parameters: {
-              type: 'params',
-              properties: {
-                subject: {
-                  type: 'string'
-                },
-                ignoreSubjects: {
-                  type: 'array',
-                  items: {
-                    type: 'string'
-                  }
-                },
-                actionedBy: {
-                  type: 'string',
-                  format: 'did',
-                  description:
-                    'Get all reports that were actioned by a specific moderator'
-                },
-                reporters: {
-                  type: 'array',
-                  items: {
-                    type: 'string'
-                  },
-                  description: 'Filter reports made by one or more DIDs'
-                },
-                resolved: {
-                  type: 'boolean'
-                },
-                actionType: {
-                  type: 'string',
-                  knownValues: [
-                    'com.atproto.admin.defs#takedown',
-                    'com.atproto.admin.defs#flag',
-                    'com.atproto.admin.defs#acknowledge',
-                    'com.atproto.admin.defs#escalate'
-                  ]
-                },
-                limit: {
-                  type: 'integer',
-                  minimum: 1,
-                  maximum: 100,
-                  default: 50
-                },
-                cursor: {
-                  type: 'string'
-                },
-                reverse: {
-                  type: 'boolean',
-                  description:
-                    'Reverse the order of the returned records? when true, returns reports in chronological order'
-                }
-              }
-            },
-            output: {
-              encoding: 'application/json',
-              schema: {
-                type: 'object',
-                required: ['reports'],
-                properties: {
-                  cursor: {
-                    type: 'string'
-                  },
-                  reports: {
-                    type: 'array',
-                    items: {
-                      type: 'ref',
-                      ref: 'lex:com.atproto.admin.defs#reportView'
-                    }
-                  }
-                }
+                ref: 'lex:com.atproto.admin.defs#modEventViewDetail'
               }
             }
           }
@@ -19898,7 +19948,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'View details about a record.',
+            description: 'Get details about a record.',
             parameters: {
               type: 'params',
               required: ['uri'],
@@ -19934,7 +19984,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'View details about a repository.',
+            description: 'Get details about a repository.',
             parameters: {
               type: 'params',
               required: ['did'],
@@ -19967,7 +20017,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              'Fetch the service-specific the admin status of a subject (account, record, or blob)',
+              'Get the service-specific admin status of a subject (account, record, or blob).',
             parameters: {
               type: 'params',
               properties: {
@@ -20009,76 +20059,186 @@ if (cid) {
           }
         }
       },
-      ComAtprotoAdminResolveModerationReports: {
+      ComAtprotoAdminQueryModerationEvents: {
         lexicon: 1,
-        id: 'com.atproto.admin.resolveModerationReports',
+        id: 'com.atproto.admin.queryModerationEvents',
         defs: {
           main: {
-            type: 'procedure',
-            description: 'Resolve moderation reports by an action.',
-            input: {
-              encoding: 'application/json',
-              schema: {
-                type: 'object',
-                required: ['actionId', 'reportIds', 'createdBy'],
-                properties: {
-                  actionId: {
-                    type: 'integer'
+            type: 'query',
+            description: 'List moderation events related to a subject.',
+            parameters: {
+              type: 'params',
+              properties: {
+                types: {
+                  type: 'array',
+                  items: {
+                    type: 'string'
                   },
-                  reportIds: {
-                    type: 'array',
-                    items: {
-                      type: 'integer'
-                    }
-                  },
-                  createdBy: {
-                    type: 'string',
-                    format: 'did'
-                  }
+                  description:
+                    'The types of events (fully qualified string in the format of com.atproto.admin#modEvent<name>) to filter by. If not specified, all events are returned.'
+                },
+                createdBy: {
+                  type: 'string',
+                  format: 'did'
+                },
+                sortDirection: {
+                  type: 'string',
+                  default: 'desc',
+                  enum: ['asc', 'desc'],
+                  description:
+                    'Sort direction for the events. Defaults to descending order of created at timestamp.'
+                },
+                subject: {
+                  type: 'string',
+                  format: 'uri'
+                },
+                includeAllUserRecords: {
+                  type: 'boolean',
+                  default: false,
+                  description:
+                    'If true, events on all record types (posts, lists, profile etc.) owned by the did are returned'
+                },
+                limit: {
+                  type: 'integer',
+                  minimum: 1,
+                  maximum: 100,
+                  default: 50
+                },
+                cursor: {
+                  type: 'string'
                 }
               }
             },
             output: {
               encoding: 'application/json',
               schema: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionView'
+                type: 'object',
+                required: ['events'],
+                properties: {
+                  cursor: {
+                    type: 'string'
+                  },
+                  events: {
+                    type: 'array',
+                    items: {
+                      type: 'ref',
+                      ref: 'lex:com.atproto.admin.defs#modEventView'
+                    }
+                  }
+                }
               }
             }
           }
         }
       },
-      ComAtprotoAdminReverseModerationAction: {
+      ComAtprotoAdminQueryModerationStatuses: {
         lexicon: 1,
-        id: 'com.atproto.admin.reverseModerationAction',
+        id: 'com.atproto.admin.queryModerationStatuses',
         defs: {
           main: {
-            type: 'procedure',
-            description: 'Reverse a moderation action.',
-            input: {
-              encoding: 'application/json',
-              schema: {
-                type: 'object',
-                required: ['id', 'reason', 'createdBy'],
-                properties: {
-                  id: {
-                    type: 'integer'
-                  },
-                  reason: {
-                    type: 'string'
-                  },
-                  createdBy: {
+            type: 'query',
+            description:
+              'View moderation statuses of subjects (record or repo).',
+            parameters: {
+              type: 'params',
+              properties: {
+                subject: {
+                  type: 'string',
+                  format: 'uri'
+                },
+                comment: {
+                  type: 'string',
+                  description: 'Search subjects by keyword from comments'
+                },
+                reportedAfter: {
+                  type: 'string',
+                  format: 'datetime',
+                  description:
+                    'Search subjects reported after a given timestamp'
+                },
+                reportedBefore: {
+                  type: 'string',
+                  format: 'datetime',
+                  description:
+                    'Search subjects reported before a given timestamp'
+                },
+                reviewedAfter: {
+                  type: 'string',
+                  format: 'datetime',
+                  description:
+                    'Search subjects reviewed after a given timestamp'
+                },
+                reviewedBefore: {
+                  type: 'string',
+                  format: 'datetime',
+                  description:
+                    'Search subjects reviewed before a given timestamp'
+                },
+                includeMuted: {
+                  type: 'boolean',
+                  description:
+                    "By default, we don't include muted subjects in the results. Set this to true to include them."
+                },
+                reviewState: {
+                  type: 'string',
+                  description:
+                    'Specify when fetching subjects in a certain state'
+                },
+                ignoreSubjects: {
+                  type: 'array',
+                  items: {
                     type: 'string',
-                    format: 'did'
+                    format: 'uri'
                   }
+                },
+                lastReviewedBy: {
+                  type: 'string',
+                  format: 'did',
+                  description:
+                    'Get all subject statuses that were reviewed by a specific moderator'
+                },
+                sortField: {
+                  type: 'string',
+                  default: 'lastReportedAt',
+                  enum: ['lastReviewedAt', 'lastReportedAt']
+                },
+                sortDirection: {
+                  type: 'string',
+                  default: 'desc',
+                  enum: ['asc', 'desc']
+                },
+                takendown: {
+                  type: 'boolean',
+                  description: 'Get subjects that were taken down'
+                },
+                limit: {
+                  type: 'integer',
+                  minimum: 1,
+                  maximum: 100,
+                  default: 50
+                },
+                cursor: {
+                  type: 'string'
                 }
               }
             },
             output: {
               encoding: 'application/json',
               schema: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionView'
+                type: 'object',
+                required: ['subjectStatuses'],
+                properties: {
+                  cursor: {
+                    type: 'string'
+                  },
+                  subjectStatuses: {
+                    type: 'array',
+                    items: {
+                      type: 'ref',
+                      ref: 'lex:com.atproto.admin.defs#subjectStatusView'
+                    }
+                  }
+                }
               }
             }
           }
@@ -20140,12 +20300,12 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: "Send email to a user's primary email address",
+            description: "Send email to a user's account email address.",
             input: {
               encoding: 'application/json',
               schema: {
                 type: 'object',
-                required: ['recipientDid', 'content'],
+                required: ['recipientDid', 'content', 'senderDid'],
                 properties: {
                   recipientDid: {
                     type: 'string',
@@ -20156,6 +20316,10 @@ if (cid) {
                   },
                   subject: {
                     type: 'string'
+                  },
+                  senderDid: {
+                    type: 'string',
+                    format: 'did'
                   }
                 }
               }
@@ -20175,90 +20339,13 @@ if (cid) {
           }
         }
       },
-      ComAtprotoAdminTakeModerationAction: {
-        lexicon: 1,
-        id: 'com.atproto.admin.takeModerationAction',
-        defs: {
-          main: {
-            type: 'procedure',
-            description: 'Take a moderation action on a repo.',
-            input: {
-              encoding: 'application/json',
-              schema: {
-                type: 'object',
-                required: ['action', 'subject', 'reason', 'createdBy'],
-                properties: {
-                  action: {
-                    type: 'string',
-                    knownValues: [
-                      'com.atproto.admin.defs#takedown',
-                      'com.atproto.admin.defs#flag',
-                      'com.atproto.admin.defs#acknowledge'
-                    ]
-                  },
-                  subject: {
-                    type: 'union',
-                    refs: [
-                      'lex:com.atproto.admin.defs#repoRef',
-                      'lex:com.atproto.repo.strongRef'
-                    ]
-                  },
-                  subjectBlobCids: {
-                    type: 'array',
-                    items: {
-                      type: 'string',
-                      format: 'cid'
-                    }
-                  },
-                  createLabelVals: {
-                    type: 'array',
-                    items: {
-                      type: 'string'
-                    }
-                  },
-                  negateLabelVals: {
-                    type: 'array',
-                    items: {
-                      type: 'string'
-                    }
-                  },
-                  reason: {
-                    type: 'string'
-                  },
-                  durationInHours: {
-                    type: 'integer',
-                    description:
-                      'Indicates how long this action was meant to be in effect before automatically expiring.'
-                  },
-                  createdBy: {
-                    type: 'string',
-                    format: 'did'
-                  }
-                }
-              }
-            },
-            output: {
-              encoding: 'application/json',
-              schema: {
-                type: 'ref',
-                ref: 'lex:com.atproto.admin.defs#actionView'
-              }
-            },
-            errors: [
-              {
-                name: 'SubjectHasAction'
-              }
-            ]
-          }
-        }
-      },
       ComAtprotoAdminUpdateAccountEmail: {
         lexicon: 1,
         id: 'com.atproto.admin.updateAccountEmail',
         defs: {
           main: {
             type: 'procedure',
-            description: "Administrative action to update an account's email",
+            description: "Administrative action to update an account's email.",
             input: {
               encoding: 'application/json',
               schema: {
@@ -20285,7 +20372,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: "Administrative action to update an account's handle",
+            description: "Administrative action to update an account's handle.",
             input: {
               encoding: 'application/json',
               schema: {
@@ -20313,7 +20400,7 @@ if (cid) {
           main: {
             type: 'procedure',
             description:
-              'Update the service-specific admin status of a subject (account, record, or blob)',
+              'Update the service-specific admin status of a subject (account, record, or blob).',
             input: {
               encoding: 'application/json',
               schema: {
@@ -20399,7 +20486,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Updates the handle of the account',
+            description: 'Updates the handle of the account.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -20423,41 +20510,41 @@ if (cid) {
           label: {
             type: 'object',
             description:
-              'Metadata tag on an atproto resource (eg, repo or record)',
+              'Metadata tag on an atproto resource (eg, repo or record).',
             required: ['src', 'uri', 'val', 'cts'],
             properties: {
               src: {
                 type: 'string',
                 format: 'did',
-                description: 'DID of the actor who created this label'
+                description: 'DID of the actor who created this label.'
               },
               uri: {
                 type: 'string',
                 format: 'uri',
                 description:
-                  'AT URI of the record, repository (account), or other resource which this label applies to'
+                  'AT URI of the record, repository (account), or other resource that this label applies to.'
               },
               cid: {
                 type: 'string',
                 format: 'cid',
                 description:
-                  "optionally, CID specifying the specific version of 'uri' resource this label applies to"
+                  "Optionally, CID specifying the specific version of 'uri' resource this label applies to."
               },
               val: {
                 type: 'string',
                 maxLength: 128,
                 description:
-                  'the short string name of the value or type of this label'
+                  'The short string name of the value or type of this label.'
               },
               neg: {
                 type: 'boolean',
                 description:
-                  'if true, this is a negation label, overwriting a previous label'
+                  'If true, this is a negation label, overwriting a previous label.'
               },
               cts: {
                 type: 'string',
                 format: 'datetime',
-                description: 'timestamp when this label was created'
+                description: 'Timestamp when this label was created.'
               }
             }
           },
@@ -20480,14 +20567,14 @@ if (cid) {
           selfLabel: {
             type: 'object',
             description:
-              'Metadata tag on an atproto record, published by the author within the record. Note -- schemas should use #selfLabels, not #selfLabel.',
+              'Metadata tag on an atproto record, published by the author within the record. Note that schemas should use #selfLabels, not #selfLabel.',
             required: ['val'],
             properties: {
               val: {
                 type: 'string',
                 maxLength: 128,
                 description:
-                  'the short string name of the value or type of this label'
+                  'The short string name of the value or type of this label.'
               }
             }
           }
@@ -20510,7 +20597,7 @@ if (cid) {
                     type: 'string'
                   },
                   description:
-                    "List of AT URI patterns to match (boolean 'OR'). Each may be a prefix (ending with '*'; will match inclusive of the string leading to '*'), or a full URI"
+                    "List of AT URI patterns to match (boolean 'OR'). Each may be a prefix (ending with '*'; will match inclusive of the string leading to '*'), or a full URI."
                 },
                 sources: {
                   type: 'array',
@@ -20519,7 +20606,7 @@ if (cid) {
                     format: 'did'
                   },
                   description:
-                    'Optional list of label sources (DIDs) to filter on'
+                    'Optional list of label sources (DIDs) to filter on.'
                 },
                 limit: {
                   type: 'integer',
@@ -20560,7 +20647,7 @@ if (cid) {
         defs: {
           main: {
             type: 'subscription',
-            description: 'Subscribe to label updates',
+            description: 'Subscribe to label updates.',
             parameters: {
               type: 'params',
               properties: {
@@ -20757,7 +20844,7 @@ if (cid) {
                   validate: {
                     type: 'boolean',
                     default: true,
-                    description: 'Validate the records?'
+                    description: 'Flag for validating the records.'
                   },
                   writes: {
                     type: 'array',
@@ -20866,7 +20953,7 @@ if (cid) {
                   validate: {
                     type: 'boolean',
                     default: true,
-                    description: 'Validate the record?'
+                    description: 'Flag for validating the record.'
                   },
                   record: {
                     type: 'unknown',
@@ -20876,7 +20963,7 @@ if (cid) {
                     type: 'string',
                     format: 'cid',
                     description:
-                      'Compare and swap with the previous commit by cid.'
+                      'Compare and swap with the previous commit by CID.'
                   }
                 }
               }
@@ -20937,13 +21024,13 @@ if (cid) {
                     type: 'string',
                     format: 'cid',
                     description:
-                      'Compare and swap with the previous record by cid.'
+                      'Compare and swap with the previous record by CID.'
                   },
                   swapCommit: {
                     type: 'string',
                     format: 'cid',
                     description:
-                      'Compare and swap with the previous commit by cid.'
+                      'Compare and swap with the previous commit by CID.'
                   }
                 }
               }
@@ -21113,7 +21200,8 @@ if (cid) {
                 },
                 reverse: {
                   type: 'boolean',
-                  description: 'Reverse the order of the returned records?'
+                  description:
+                    'Flag to reverse the order of the returned records.'
                 }
               }
             },
@@ -21188,7 +21276,7 @@ if (cid) {
                   validate: {
                     type: 'boolean',
                     default: true,
-                    description: 'Validate the record?'
+                    description: 'Flag for validating the record.'
                   },
                   record: {
                     type: 'unknown',
@@ -21198,13 +21286,13 @@ if (cid) {
                     type: 'string',
                     format: 'cid',
                     description:
-                      'Compare and swap with the previous record by cid.'
+                      'Compare and swap with the previous record by CID.'
                   },
                   swapCommit: {
                     type: 'string',
                     format: 'cid',
                     description:
-                      'Compare and swap with the previous commit by cid.'
+                      'Compare and swap with the previous commit by CID.'
                   }
                 }
               }
@@ -21418,7 +21506,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Create an app-specific password.',
+            description: 'Create an App Password.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -21506,7 +21594,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Create an invite code.',
+            description: 'Create invite codes.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -21694,7 +21782,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Delete a user account with a token and password.',
+            description: "Delete an actor's account with a token and password.",
             input: {
               encoding: 'application/json',
               schema: {
@@ -21785,7 +21873,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Get all invite codes for a given account',
+            description: 'Get all invite codes for a given account.',
             parameters: {
               type: 'params',
               properties: {
@@ -21865,7 +21953,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'List all app-specific passwords.',
+            description: 'List all App Passwords.',
             output: {
               encoding: 'application/json',
               schema: {
@@ -21961,7 +22049,7 @@ if (cid) {
           main: {
             type: 'procedure',
             description:
-              'Request an email with a code to confirm ownership of email'
+              'Request an email with a code to confirm ownership of email.'
           }
         }
       },
@@ -22083,7 +22171,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Revoke an app-specific password by name.',
+            description: 'Revoke an App Password by name.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -22172,7 +22260,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Gets blocks from a given repo.',
+            description: 'Get blocks from a given repo.',
             parameters: {
               type: 'params',
               required: ['did', 'cids'],
@@ -22268,7 +22356,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Gets the current commit CID & revision of the repo.',
+            description: 'Get the current commit CID & revision of the repo.',
             parameters: {
               type: 'params',
               required: ['did'],
@@ -22311,7 +22399,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              'Gets blocks needed for existence or non-existence of record.',
+              'Get blocks needed for existence or non-existence of record.',
             parameters: {
               type: 'params',
               required: ['did', 'collection', 'rkey'],
@@ -22348,7 +22436,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              "Gets the did's repo, optionally catching up from a specific revision.",
+              "Gets the DID's repo, optionally catching up from a specific revision.",
             parameters: {
               type: 'params',
               required: ['did'],
@@ -22376,7 +22464,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'List blob cids since some revision',
+            description: 'List blob CIDs since some revision.',
             parameters: {
               type: 'params',
               required: ['did'],
@@ -22389,7 +22477,7 @@ if (cid) {
                 since: {
                   type: 'string',
                   description:
-                    'Optional revision of the repo to list blobs since'
+                    'Optional revision of the repo to list blobs since.'
                 },
                 limit: {
                   type: 'integer',
@@ -22430,7 +22518,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'List dids and root cids of hosted repos',
+            description: 'List DIDs and root CIDs of hosted repos.',
             parameters: {
               type: 'params',
               properties: {
@@ -22491,7 +22579,7 @@ if (cid) {
           main: {
             type: 'procedure',
             description:
-              'Notify a crawling service of a recent update. Often when a long break between updates causes the connection with the crawling service to break.',
+              'Notify a crawling service of a recent update; often when a long break between updates causes the connection with the crawling service to break.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -22540,7 +22628,7 @@ if (cid) {
         defs: {
           main: {
             type: 'subscription',
-            description: 'Subscribe to repo updates',
+            description: 'Subscribe to repo updates.',
             parameters: {
               type: 'params',
               properties: {
@@ -22609,15 +22697,16 @@ if (cid) {
               },
               rev: {
                 type: 'string',
-                description: 'The rev of the emitted commit'
+                description: 'The rev of the emitted commit.'
               },
               since: {
                 type: 'string',
-                description: 'The rev of the last emitted commit from this repo'
+                description:
+                  'The rev of the last emitted commit from this repo.'
               },
               blocks: {
                 type: 'bytes',
-                description: 'CAR file containing relevant blocks',
+                description: 'CAR file containing relevant blocks.',
                 maxLength: 1e6
               },
               ops: {
@@ -22715,7 +22804,7 @@ if (cid) {
           repoOp: {
             type: 'object',
             description:
-              "A repo operation, ie a write of a single record. For creates and updates, cid is the record's CID as of this operation. For deletes, it's null.",
+              "A repo operation, ie a write of a single record. For creates and updates, CID is the record's CID as of this operation. For deletes, it's null.",
             required: ['action', 'path', 'cid'],
             nullable: ['cid'],
             properties: {
@@ -22730,6 +22819,176 @@ if (cid) {
                 type: 'cid-link'
               }
             }
+          }
+        }
+      },
+      ComAtprotoTempFetchLabels: {
+        lexicon: 1,
+        id: 'com.atproto.temp.fetchLabels',
+        defs: {
+          main: {
+            type: 'query',
+            description:
+              'Fetch all labels from a labeler created after a certain date.',
+            parameters: {
+              type: 'params',
+              properties: {
+                since: {
+                  type: 'integer'
+                },
+                limit: {
+                  type: 'integer',
+                  minimum: 1,
+                  maximum: 250,
+                  default: 50
+                }
+              }
+            },
+            output: {
+              encoding: 'application/json',
+              schema: {
+                type: 'object',
+                required: ['labels'],
+                properties: {
+                  labels: {
+                    type: 'array',
+                    items: {
+                      type: 'ref',
+                      ref: 'lex:com.atproto.label.defs#label'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      ComAtprotoTempImportRepo: {
+        lexicon: 1,
+        id: 'com.atproto.temp.importRepo',
+        defs: {
+          main: {
+            type: 'procedure',
+            description:
+              "Gets the did's repo, optionally catching up from a specific revision.",
+            parameters: {
+              type: 'params',
+              required: ['did'],
+              properties: {
+                did: {
+                  type: 'string',
+                  format: 'did',
+                  description: 'The DID of the repo.'
+                }
+              }
+            },
+            input: {
+              encoding: 'application/vnd.ipld.car'
+            },
+            output: {
+              encoding: 'text/plain'
+            }
+          }
+        }
+      },
+      ComAtprotoTempPushBlob: {
+        lexicon: 1,
+        id: 'com.atproto.temp.pushBlob',
+        defs: {
+          main: {
+            type: 'procedure',
+            description:
+              "Gets the did's repo, optionally catching up from a specific revision.",
+            parameters: {
+              type: 'params',
+              required: ['did'],
+              properties: {
+                did: {
+                  type: 'string',
+                  format: 'did',
+                  description: 'The DID of the repo.'
+                }
+              }
+            },
+            input: {
+              encoding: '*/*'
+            }
+          }
+        }
+      },
+      ComAtprotoTempTransferAccount: {
+        lexicon: 1,
+        id: 'com.atproto.temp.transferAccount',
+        defs: {
+          main: {
+            type: 'procedure',
+            description: 'Transfer an account.',
+            input: {
+              encoding: 'application/json',
+              schema: {
+                type: 'object',
+                required: ['handle', 'did', 'plcOp'],
+                properties: {
+                  handle: {
+                    type: 'string',
+                    format: 'handle'
+                  },
+                  did: {
+                    type: 'string',
+                    format: 'did'
+                  },
+                  plcOp: {
+                    type: 'unknown'
+                  }
+                }
+              }
+            },
+            output: {
+              encoding: 'application/json',
+              schema: {
+                type: 'object',
+                required: ['accessJwt', 'refreshJwt', 'handle', 'did'],
+                properties: {
+                  accessJwt: {
+                    type: 'string'
+                  },
+                  refreshJwt: {
+                    type: 'string'
+                  },
+                  handle: {
+                    type: 'string',
+                    format: 'handle'
+                  },
+                  did: {
+                    type: 'string',
+                    format: 'did'
+                  }
+                }
+              }
+            },
+            errors: [
+              {
+                name: 'InvalidHandle'
+              },
+              {
+                name: 'InvalidPassword'
+              },
+              {
+                name: 'InvalidInviteCode'
+              },
+              {
+                name: 'HandleNotAvailable'
+              },
+              {
+                name: 'UnsupportedDomain'
+              },
+              {
+                name: 'UnresolvableDid'
+              },
+              {
+                name: 'IncompatibleDidDoc'
+              }
+            ]
           }
         }
       },
@@ -22961,7 +23220,7 @@ if (cid) {
               birthDate: {
                 type: 'string',
                 format: 'datetime',
-                description: 'The birth date of the owner of the account.'
+                description: 'The birth date of account owner.'
               }
             }
           },
@@ -23003,7 +23262,7 @@ if (cid) {
             properties: {
               sort: {
                 type: 'string',
-                description: 'Sorting mode.',
+                description: 'Sorting mode for threads.',
                 knownValues: ['oldest', 'newest', 'most-likes', 'random']
               },
               prioritizeFollowedUsers: {
@@ -23047,6 +23306,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
+            description: 'Get detailed profile view of an actor.',
             parameters: {
               type: 'params',
               required: ['actor'],
@@ -23073,6 +23333,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
+            description: 'Get detailed profile views of multiple actors.',
             parameters: {
               type: 'params',
               required: ['actors'],
@@ -23112,8 +23373,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description:
-              'Get a list of actors suggested for following. Used in discovery UIs.',
+            description: 'Get a list of suggested actors, used for discovery.',
             parameters: {
               type: 'params',
               properties: {
@@ -23156,6 +23416,7 @@ if (cid) {
         defs: {
           main: {
             type: 'record',
+            description: 'A declaration of a profile.',
             key: 'literal:self',
             record: {
               type: 'object',
@@ -23195,8 +23456,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description:
-              'Sets the private preferences attached to the account.',
+            description: 'Set the private preferences attached to the account.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -23225,12 +23485,12 @@ if (cid) {
               properties: {
                 term: {
                   type: 'string',
-                  description: "DEPRECATED: use 'q' instead"
+                  description: "DEPRECATED: use 'q' instead."
                 },
                 q: {
                   type: 'string',
                   description:
-                    'search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended'
+                    'Search query string. Syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.'
                 },
                 limit: {
                   type: 'integer',
@@ -23271,17 +23531,17 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Find actor suggestions for a search term.',
+            description: 'Find actor suggestions for a prefix search term.',
             parameters: {
               type: 'params',
               properties: {
                 term: {
                   type: 'string',
-                  description: "DEPRECATED: use 'q' instead"
+                  description: "DEPRECATED: use 'q' instead."
                 },
                 q: {
                   type: 'string',
-                  description: 'search query prefix; not a full query string'
+                  description: 'Search query prefix; not a full query string.'
                 },
                 limit: {
                   type: 'integer',
@@ -23314,7 +23574,7 @@ if (cid) {
         lexicon: 1,
         id: 'app.bsky.embed.external',
         description:
-          'A representation of some externally linked content, embedded in another form of content',
+          'A representation of some externally linked content, embedded in another form of content.',
         defs: {
           main: {
             type: 'object',
@@ -23381,7 +23641,7 @@ if (cid) {
       AppBskyEmbedImages: {
         lexicon: 1,
         id: 'app.bsky.embed.images',
-        description: 'A set of images embedded in some other form of content',
+        description: 'A set of images embedded in some other form of content.',
         defs: {
           main: {
             type: 'object',
@@ -23470,7 +23730,7 @@ if (cid) {
         lexicon: 1,
         id: 'app.bsky.embed.record',
         description:
-          'A representation of a record embedded in another form of content',
+          'A representation of a record embedded in another form of content.',
         defs: {
           main: {
             type: 'object',
@@ -23580,7 +23840,7 @@ if (cid) {
         lexicon: 1,
         id: 'app.bsky.embed.recordWithMedia',
         description:
-          'A representation of a record embedded in another form of content, alongside other compatible embeds',
+          'A representation of a record embedded in another form of content, alongside other compatible embeds.',
         defs: {
           main: {
             type: 'object',
@@ -23690,6 +23950,9 @@ if (cid) {
               like: {
                 type: 'string',
                 format: 'at-uri'
+              },
+              replyDisabled: {
+                type: 'boolean'
               }
             }
           },
@@ -23773,10 +24036,6 @@ if (cid) {
                     'lex:app.bsky.feed.defs#blockedPost'
                   ]
                 }
-              },
-              viewer: {
-                type: 'ref',
-                ref: 'lex:app.bsky.feed.defs#viewerThreadState'
               }
             }
           },
@@ -23823,14 +24082,6 @@ if (cid) {
               viewer: {
                 type: 'ref',
                 ref: 'lex:app.bsky.actor.defs#viewerState'
-              }
-            }
-          },
-          viewerThreadState: {
-            type: 'object',
-            properties: {
-              canReply: {
-                type: 'boolean'
               }
             }
           },
@@ -23958,7 +24209,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              'Returns information about a given feed generator including TOS & offered feed URIs',
+              'Get information about a feed generator, including policies and offered feed URIs.',
             output: {
               encoding: 'application/json',
               schema: {
@@ -24013,7 +24264,7 @@ if (cid) {
         defs: {
           main: {
             type: 'record',
-            description: 'A declaration of the existence of a feed generator',
+            description: 'A declaration of the existence of a feed generator.',
             key: 'any',
             record: {
               type: 'object',
@@ -24064,7 +24315,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Retrieve a list of feeds created by a given actor',
+            description: 'Get a list of feeds created by the actor.',
             parameters: {
               type: 'params',
               required: ['actor'],
@@ -24112,7 +24363,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'A view of the posts liked by an actor.',
+            description: 'Get a list of posts liked by an actor.',
             parameters: {
               type: 'params',
               required: ['actor'],
@@ -24168,7 +24419,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: "A view of an actor's feed.",
+            description: "Get a view of an actor's feed.",
             parameters: {
               type: 'params',
               required: ['actor'],
@@ -24191,7 +24442,8 @@ if (cid) {
                   knownValues: [
                     'posts_with_replies',
                     'posts_no_replies',
-                    'posts_with_media'
+                    'posts_with_media',
+                    'posts_and_author_threads'
                   ],
                   default: 'posts_with_replies'
                 }
@@ -24234,7 +24486,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              "Compose and hydrate a feed from a user's selected feed generator",
+              "Get a hydrated feed from an actor's selected feed generator.",
             parameters: {
               type: 'params',
               required: ['feed'],
@@ -24287,8 +24539,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description:
-              'Get information about a specific feed offered by a feed generator, such as its online status',
+            description: 'Get information about a feed generator.',
             parameters: {
               type: 'params',
               required: ['feed'],
@@ -24327,7 +24578,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Get information about a list of feed generators',
+            description: 'Get information about a list of feed generators.',
             parameters: {
               type: 'params',
               required: ['feeds'],
@@ -24366,7 +24617,8 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'A skeleton of a feed provided by a feed generator',
+            description:
+              'Get a skeleton of a feed provided by a feed generator.',
             parameters: {
               type: 'params',
               required: ['feed'],
@@ -24419,6 +24671,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
+            description: 'Get the list of likes.',
             parameters: {
               type: 'params',
               required: ['uri'],
@@ -24496,7 +24749,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'A view of a recent posts from actors in a list',
+            description: 'Get a view of a recent posts from actors in a list.',
             parameters: {
               type: 'params',
               required: ['list'],
@@ -24549,6 +24802,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
+            description: 'Get posts in a thread.',
             parameters: {
               type: 'params',
               required: ['uri'],
@@ -24602,7 +24856,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: "A view of an actor's feed.",
+            description: "Get a view of an actor's feed.",
             parameters: {
               type: 'params',
               required: ['uris'],
@@ -24642,6 +24896,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
+            description: 'Get a list of reposts.',
             parameters: {
               type: 'params',
               required: ['uri'],
@@ -24744,7 +24999,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: "A view of the user's home timeline.",
+            description: "Get a view of the actor's home timeline.",
             parameters: {
               type: 'params',
               properties: {
@@ -24790,6 +25045,7 @@ if (cid) {
         defs: {
           main: {
             type: 'record',
+            description: 'A declaration of a like.',
             key: 'tid',
             record: {
               type: 'object',
@@ -24814,6 +25070,7 @@ if (cid) {
         defs: {
           main: {
             type: 'record',
+            description: 'A declaration of a post.',
             key: 'tid',
             record: {
               type: 'object',
@@ -24938,6 +25195,7 @@ if (cid) {
         id: 'app.bsky.feed.repost',
         defs: {
           main: {
+            description: 'A declaration of a repost.',
             type: 'record',
             key: 'tid',
             record: {
@@ -24963,7 +25221,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Find posts matching search criteria',
+            description: 'Find posts matching search criteria.',
             parameters: {
               type: 'params',
               required: ['q'],
@@ -24971,7 +25229,7 @@ if (cid) {
                 q: {
                   type: 'string',
                   description:
-                    'search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended'
+                    'Search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.'
                 },
                 limit: {
                   type: 'integer',
@@ -24982,7 +25240,7 @@ if (cid) {
                 cursor: {
                   type: 'string',
                   description:
-                    'optional pagination mechanism; may not necessarily allow scrolling through entire result set'
+                    'Optional pagination mechanism; may not necessarily allow scrolling through entire result set.'
                 }
               }
             },
@@ -24998,7 +25256,7 @@ if (cid) {
                   hitsTotal: {
                     type: 'integer',
                     description:
-                      'count of search hits. optional, may be rounded/truncated, and may not be possible to paginate through all hits'
+                      'Count of search hits. Optional, may be rounded/truncated, and may not be possible to paginate through all hits.'
                   },
                   posts: {
                     type: 'array',
@@ -25083,7 +25341,7 @@ if (cid) {
         defs: {
           main: {
             type: 'record',
-            description: 'A block.',
+            description: 'A declaration of a block.',
             key: 'tid',
             record: {
               type: 'object',
@@ -25192,8 +25450,12 @@ if (cid) {
           },
           listItemView: {
             type: 'object',
-            required: ['subject'],
+            required: ['uri', 'subject'],
             properties: {
+              uri: {
+                type: 'string',
+                format: 'at-uri'
+              },
               subject: {
                 type: 'ref',
                 ref: 'lex:app.bsky.actor.defs#profileView'
@@ -25210,12 +25472,12 @@ if (cid) {
           modlist: {
             type: 'token',
             description:
-              'A list of actors to apply an aggregate moderation action (mute/block) on'
+              'A list of actors to apply an aggregate moderation action (mute/block) on.'
           },
           curatelist: {
             type: 'token',
             description:
-              'A list of actors used for curation purposes such as list feeds or interaction gating'
+              'A list of actors used for curation purposes such as list feeds or interaction gating.'
           },
           listViewerState: {
             type: 'object',
@@ -25237,7 +25499,7 @@ if (cid) {
         defs: {
           main: {
             type: 'record',
-            description: 'A social follow.',
+            description: 'A declaration of a social follow.',
             key: 'tid',
             record: {
               type: 'object',
@@ -25262,7 +25524,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: "Who is the requester's account blocking?",
+            description: 'Get a list of who the actor is blocking.',
             parameters: {
               type: 'params',
               properties: {
@@ -25305,7 +25567,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Who is following an actor?',
+            description: "Get a list of an actor's followers.",
             parameters: {
               type: 'params',
               required: ['actor'],
@@ -25357,7 +25619,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Who is an actor following?',
+            description: 'Get a list of who the actor follows.',
             parameters: {
               type: 'params',
               required: ['actor'],
@@ -25409,7 +25671,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Fetch a list of actors',
+            description: 'Get a list of actors.',
             parameters: {
               type: 'params',
               required: ['list'],
@@ -25461,7 +25723,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: "Which lists is the requester's account blocking?",
+            description: 'Get lists that the actor is blocking.',
             parameters: {
               type: 'params',
               properties: {
@@ -25504,7 +25766,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: "Which lists is the requester's account muting?",
+            description: 'Get lists that the actor is muting.',
             parameters: {
               type: 'params',
               properties: {
@@ -25547,7 +25809,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Fetch a list of lists that belong to an actor',
+            description: 'Get a list of lists that belong to an actor.',
             parameters: {
               type: 'params',
               required: ['actor'],
@@ -25595,7 +25857,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Who does the viewer mute?',
+            description: 'Get a list of who the actor mutes.',
             parameters: {
               type: 'params',
               properties: {
@@ -25750,7 +26012,7 @@ if (cid) {
         defs: {
           main: {
             type: 'record',
-            description: 'An item under a declared list of actors',
+            description: 'An item under a declared list of actors.',
             key: 'tid',
             record: {
               type: 'object',
@@ -25779,7 +26041,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Mute an actor by did or handle.',
+            description: 'Mute an actor by DID or handle.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -25825,7 +26087,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Unmute an actor by did or handle.',
+            description: 'Unmute an actor by DID or handle.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -25871,6 +26133,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
+            description: 'Get the count of unread notifications.',
             parameters: {
               type: 'params',
               properties: {
@@ -25901,6 +26164,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
+            description: 'Get a list of notifications.',
             parameters: {
               type: 'params',
               properties: {
@@ -25934,6 +26198,10 @@ if (cid) {
                       type: 'ref',
                       ref: 'lex:app.bsky.notification.listNotifications#notification'
                     }
+                  },
+                  seenAt: {
+                    type: 'string',
+                    format: 'datetime'
                   }
                 }
               }
@@ -26007,7 +26275,7 @@ if (cid) {
         defs: {
           main: {
             type: 'procedure',
-            description: 'Register for push notifications with a service',
+            description: 'Register for push notifications with a service.',
             input: {
               encoding: 'application/json',
               schema: {
@@ -26167,7 +26435,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              'DEPRECATED: will be removed soon, please find a feed generator alternative',
+              'DEPRECATED: will be removed soon. Use a feed generator alternative.',
             parameters: {
               type: 'params',
               properties: {
@@ -26215,7 +26483,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              'An unspecced view of globally popular feed generators',
+              'An unspecced view of globally popular feed generators.',
             parameters: {
               type: 'params',
               properties: {
@@ -26262,7 +26530,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              'A skeleton of a timeline - UNSPECCED & WILL GO AWAY SOON',
+              'DEPRECATED: a skeleton of a timeline. Unspecced and will be unavailable soon.',
             parameters: {
               type: 'params',
               properties: {
@@ -26311,7 +26579,7 @@ if (cid) {
           main: {
             type: 'query',
             description:
-              'Backend Actors (profile) search, returning only skeleton',
+              'Backend Actors (profile) search, returns only skeleton.',
             parameters: {
               type: 'params',
               required: ['q'],
@@ -26319,11 +26587,11 @@ if (cid) {
                 q: {
                   type: 'string',
                   description:
-                    'search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended. For typeahead search, only simple term match is supported, not full syntax'
+                    'Search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended. For typeahead search, only simple term match is supported, not full syntax.'
                 },
                 typeahead: {
                   type: 'boolean',
-                  description: "if true, acts as fast/simple 'typeahead' query"
+                  description: "If true, acts as fast/simple 'typeahead' query."
                 },
                 limit: {
                   type: 'integer',
@@ -26334,7 +26602,7 @@ if (cid) {
                 cursor: {
                   type: 'string',
                   description:
-                    'optional pagination mechanism; may not necessarily allow scrolling through entire result set'
+                    'Optional pagination mechanism; may not necessarily allow scrolling through entire result set.'
                 }
               }
             },
@@ -26350,7 +26618,7 @@ if (cid) {
                   hitsTotal: {
                     type: 'integer',
                     description:
-                      'count of search hits. optional, may be rounded/truncated, and may not be possible to paginate through all hits'
+                      'Count of search hits. Optional, may be rounded/truncated, and may not be possible to paginate through all hits.'
                   },
                   actors: {
                     type: 'array',
@@ -26376,7 +26644,7 @@ if (cid) {
         defs: {
           main: {
             type: 'query',
-            description: 'Backend Posts search, returning only skeleton',
+            description: 'Backend Posts search, returns only skeleton',
             parameters: {
               type: 'params',
               required: ['q'],
@@ -26384,7 +26652,7 @@ if (cid) {
                 q: {
                   type: 'string',
                   description:
-                    'search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended'
+                    'Search query string; syntax, phrase, boolean, and faceting is unspecified, but Lucene query syntax is recommended.'
                 },
                 limit: {
                   type: 'integer',
@@ -26395,7 +26663,7 @@ if (cid) {
                 cursor: {
                   type: 'string',
                   description:
-                    'optional pagination mechanism; may not necessarily allow scrolling through entire result set'
+                    'Optional pagination mechanism; may not necessarily allow scrolling through entire result set.'
                 }
               }
             },
@@ -26411,7 +26679,7 @@ if (cid) {
                   hitsTotal: {
                     type: 'integer',
                     description:
-                      'count of search hits. optional, may be rounded/truncated, and may not be possible to paginate through all hits'
+                      'Count of search hits. Optional, may be rounded/truncated, and may not be possible to paginate through all hits.'
                   },
                   posts: {
                     type: 'array',
@@ -26435,9 +26703,9 @@ if (cid) {
     var schemas = Object.values(schemaDict)
     var lexicons = new Lexicons(schemas)
 
-    // src/client/types/com/atproto/admin/disableAccountInvites.ts
-    var disableAccountInvites_exports = {}
-    __export(disableAccountInvites_exports, {
+    // src/client/types/com/atproto/admin/deleteAccount.ts
+    var deleteAccount_exports = {}
+    __export(deleteAccount_exports, {
       toKnownErr: () => toKnownErr
     })
     function toKnownErr(e) {
@@ -26446,9 +26714,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/disableInviteCodes.ts
-    var disableInviteCodes_exports = {}
-    __export(disableInviteCodes_exports, {
+    // src/client/types/com/atproto/admin/disableAccountInvites.ts
+    var disableAccountInvites_exports = {}
+    __export(disableAccountInvites_exports, {
       toKnownErr: () => toKnownErr2
     })
     function toKnownErr2(e) {
@@ -26457,9 +26725,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/enableAccountInvites.ts
-    var enableAccountInvites_exports = {}
-    __export(enableAccountInvites_exports, {
+    // src/client/types/com/atproto/admin/disableInviteCodes.ts
+    var disableInviteCodes_exports = {}
+    __export(disableInviteCodes_exports, {
       toKnownErr: () => toKnownErr3
     })
     function toKnownErr3(e) {
@@ -26468,20 +26736,27 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/getAccountInfo.ts
-    var getAccountInfo_exports = {}
-    __export(getAccountInfo_exports, {
+    // src/client/types/com/atproto/admin/emitModerationEvent.ts
+    var emitModerationEvent_exports = {}
+    __export(emitModerationEvent_exports, {
+      SubjectHasActionError: () => SubjectHasActionError,
       toKnownErr: () => toKnownErr4
     })
+    var SubjectHasActionError = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
     function toKnownErr4(e) {
       if (e instanceof XRPCError) {
+        if (e.error === 'SubjectHasAction') return new SubjectHasActionError(e)
       }
       return e
     }
 
-    // src/client/types/com/atproto/admin/getInviteCodes.ts
-    var getInviteCodes_exports = {}
-    __export(getInviteCodes_exports, {
+    // src/client/types/com/atproto/admin/enableAccountInvites.ts
+    var enableAccountInvites_exports = {}
+    __export(enableAccountInvites_exports, {
       toKnownErr: () => toKnownErr5
     })
     function toKnownErr5(e) {
@@ -26490,9 +26765,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/getModerationAction.ts
-    var getModerationAction_exports = {}
-    __export(getModerationAction_exports, {
+    // src/client/types/com/atproto/admin/getAccountInfo.ts
+    var getAccountInfo_exports = {}
+    __export(getAccountInfo_exports, {
       toKnownErr: () => toKnownErr6
     })
     function toKnownErr6(e) {
@@ -26501,9 +26776,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/getModerationActions.ts
-    var getModerationActions_exports = {}
-    __export(getModerationActions_exports, {
+    // src/client/types/com/atproto/admin/getInviteCodes.ts
+    var getInviteCodes_exports = {}
+    __export(getInviteCodes_exports, {
       toKnownErr: () => toKnownErr7
     })
     function toKnownErr7(e) {
@@ -26512,23 +26787,12 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/getModerationReport.ts
-    var getModerationReport_exports = {}
-    __export(getModerationReport_exports, {
+    // src/client/types/com/atproto/admin/getModerationEvent.ts
+    var getModerationEvent_exports = {}
+    __export(getModerationEvent_exports, {
       toKnownErr: () => toKnownErr8
     })
     function toKnownErr8(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
-    // src/client/types/com/atproto/admin/getModerationReports.ts
-    var getModerationReports_exports = {}
-    __export(getModerationReports_exports, {
-      toKnownErr: () => toKnownErr9
-    })
-    function toKnownErr9(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26538,14 +26802,14 @@ if (cid) {
     var getRecord_exports = {}
     __export(getRecord_exports, {
       RecordNotFoundError: () => RecordNotFoundError,
-      toKnownErr: () => toKnownErr10
+      toKnownErr: () => toKnownErr9
     })
     var RecordNotFoundError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr10(e) {
+    function toKnownErr9(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'RecordNotFound') return new RecordNotFoundError(e)
       }
@@ -26556,14 +26820,14 @@ if (cid) {
     var getRepo_exports = {}
     __export(getRepo_exports, {
       RepoNotFoundError: () => RepoNotFoundError,
-      toKnownErr: () => toKnownErr11
+      toKnownErr: () => toKnownErr10
     })
     var RepoNotFoundError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr11(e) {
+    function toKnownErr10(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'RepoNotFound') return new RepoNotFoundError(e)
       }
@@ -26573,6 +26837,17 @@ if (cid) {
     // src/client/types/com/atproto/admin/getSubjectStatus.ts
     var getSubjectStatus_exports = {}
     __export(getSubjectStatus_exports, {
+      toKnownErr: () => toKnownErr11
+    })
+    function toKnownErr11(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/com/atproto/admin/queryModerationEvents.ts
+    var queryModerationEvents_exports = {}
+    __export(queryModerationEvents_exports, {
       toKnownErr: () => toKnownErr12
     })
     function toKnownErr12(e) {
@@ -26581,9 +26856,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/resolveModerationReports.ts
-    var resolveModerationReports_exports = {}
-    __export(resolveModerationReports_exports, {
+    // src/client/types/com/atproto/admin/queryModerationStatuses.ts
+    var queryModerationStatuses_exports = {}
+    __export(queryModerationStatuses_exports, {
       toKnownErr: () => toKnownErr13
     })
     function toKnownErr13(e) {
@@ -26592,9 +26867,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/reverseModerationAction.ts
-    var reverseModerationAction_exports = {}
-    __export(reverseModerationAction_exports, {
+    // src/client/types/com/atproto/admin/searchRepos.ts
+    var searchRepos_exports = {}
+    __export(searchRepos_exports, {
       toKnownErr: () => toKnownErr14
     })
     function toKnownErr14(e) {
@@ -26603,9 +26878,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/searchRepos.ts
-    var searchRepos_exports = {}
-    __export(searchRepos_exports, {
+    // src/client/types/com/atproto/admin/sendEmail.ts
+    var sendEmail_exports = {}
+    __export(sendEmail_exports, {
       toKnownErr: () => toKnownErr15
     })
     function toKnownErr15(e) {
@@ -26614,9 +26889,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/sendEmail.ts
-    var sendEmail_exports = {}
-    __export(sendEmail_exports, {
+    // src/client/types/com/atproto/admin/updateAccountEmail.ts
+    var updateAccountEmail_exports = {}
+    __export(updateAccountEmail_exports, {
       toKnownErr: () => toKnownErr16
     })
     function toKnownErr16(e) {
@@ -26625,41 +26900,12 @@ if (cid) {
       return e
     }
 
-    // src/client/types/com/atproto/admin/takeModerationAction.ts
-    var takeModerationAction_exports = {}
-    __export(takeModerationAction_exports, {
-      SubjectHasActionError: () => SubjectHasActionError,
-      toKnownErr: () => toKnownErr17
-    })
-    var SubjectHasActionError = class extends XRPCError {
-      constructor(src2) {
-        super(src2.status, src2.error, src2.message, src2.headers)
-      }
-    }
-    function toKnownErr17(e) {
-      if (e instanceof XRPCError) {
-        if (e.error === 'SubjectHasAction') return new SubjectHasActionError(e)
-      }
-      return e
-    }
-
-    // src/client/types/com/atproto/admin/updateAccountEmail.ts
-    var updateAccountEmail_exports = {}
-    __export(updateAccountEmail_exports, {
-      toKnownErr: () => toKnownErr18
-    })
-    function toKnownErr18(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
     // src/client/types/com/atproto/admin/updateAccountHandle.ts
     var updateAccountHandle_exports = {}
     __export(updateAccountHandle_exports, {
-      toKnownErr: () => toKnownErr19
+      toKnownErr: () => toKnownErr17
     })
-    function toKnownErr19(e) {
+    function toKnownErr17(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26668,9 +26914,9 @@ if (cid) {
     // src/client/types/com/atproto/admin/updateSubjectStatus.ts
     var updateSubjectStatus_exports = {}
     __export(updateSubjectStatus_exports, {
-      toKnownErr: () => toKnownErr20
+      toKnownErr: () => toKnownErr18
     })
-    function toKnownErr20(e) {
+    function toKnownErr18(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26679,9 +26925,9 @@ if (cid) {
     // src/client/types/com/atproto/identity/resolveHandle.ts
     var resolveHandle_exports = {}
     __export(resolveHandle_exports, {
-      toKnownErr: () => toKnownErr21
+      toKnownErr: () => toKnownErr19
     })
-    function toKnownErr21(e) {
+    function toKnownErr19(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26690,9 +26936,9 @@ if (cid) {
     // src/client/types/com/atproto/identity/updateHandle.ts
     var updateHandle_exports = {}
     __export(updateHandle_exports, {
-      toKnownErr: () => toKnownErr22
+      toKnownErr: () => toKnownErr20
     })
-    function toKnownErr22(e) {
+    function toKnownErr20(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26701,9 +26947,9 @@ if (cid) {
     // src/client/types/com/atproto/label/queryLabels.ts
     var queryLabels_exports = {}
     __export(queryLabels_exports, {
-      toKnownErr: () => toKnownErr23
+      toKnownErr: () => toKnownErr21
     })
-    function toKnownErr23(e) {
+    function toKnownErr21(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26712,9 +26958,9 @@ if (cid) {
     // src/client/types/com/atproto/moderation/createReport.ts
     var createReport_exports = {}
     __export(createReport_exports, {
-      toKnownErr: () => toKnownErr24
+      toKnownErr: () => toKnownErr22
     })
-    function toKnownErr24(e) {
+    function toKnownErr22(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26727,7 +26973,7 @@ if (cid) {
       isCreate: () => isCreate,
       isDelete: () => isDelete,
       isUpdate: () => isUpdate,
-      toKnownErr: () => toKnownErr25,
+      toKnownErr: () => toKnownErr23,
       validateCreate: () => validateCreate,
       validateDelete: () => validateDelete,
       validateUpdate: () => validateUpdate
@@ -26747,7 +26993,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr25(e) {
+    function toKnownErr23(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'InvalidSwap') return new InvalidSwapError(e)
       }
@@ -26788,14 +27034,14 @@ if (cid) {
     var createRecord_exports = {}
     __export(createRecord_exports, {
       InvalidSwapError: () => InvalidSwapError2,
-      toKnownErr: () => toKnownErr26
+      toKnownErr: () => toKnownErr24
     })
     var InvalidSwapError2 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr26(e) {
+    function toKnownErr24(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'InvalidSwap') return new InvalidSwapError2(e)
       }
@@ -26806,14 +27052,14 @@ if (cid) {
     var deleteRecord_exports = {}
     __export(deleteRecord_exports, {
       InvalidSwapError: () => InvalidSwapError3,
-      toKnownErr: () => toKnownErr27
+      toKnownErr: () => toKnownErr25
     })
     var InvalidSwapError3 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr27(e) {
+    function toKnownErr25(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'InvalidSwap') return new InvalidSwapError3(e)
       }
@@ -26823,9 +27069,9 @@ if (cid) {
     // src/client/types/com/atproto/repo/describeRepo.ts
     var describeRepo_exports = {}
     __export(describeRepo_exports, {
-      toKnownErr: () => toKnownErr28
+      toKnownErr: () => toKnownErr26
     })
-    function toKnownErr28(e) {
+    function toKnownErr26(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26834,9 +27080,9 @@ if (cid) {
     // src/client/types/com/atproto/repo/getRecord.ts
     var getRecord_exports2 = {}
     __export(getRecord_exports2, {
-      toKnownErr: () => toKnownErr29
+      toKnownErr: () => toKnownErr27
     })
-    function toKnownErr29(e) {
+    function toKnownErr27(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26846,10 +27092,10 @@ if (cid) {
     var listRecords_exports = {}
     __export(listRecords_exports, {
       isRecord: () => isRecord,
-      toKnownErr: () => toKnownErr30,
+      toKnownErr: () => toKnownErr28,
       validateRecord: () => validateRecord
     })
-    function toKnownErr30(e) {
+    function toKnownErr28(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26869,14 +27115,14 @@ if (cid) {
     var putRecord_exports = {}
     __export(putRecord_exports, {
       InvalidSwapError: () => InvalidSwapError4,
-      toKnownErr: () => toKnownErr31
+      toKnownErr: () => toKnownErr29
     })
     var InvalidSwapError4 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr31(e) {
+    function toKnownErr29(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'InvalidSwap') return new InvalidSwapError4(e)
       }
@@ -26886,9 +27132,9 @@ if (cid) {
     // src/client/types/com/atproto/repo/uploadBlob.ts
     var uploadBlob_exports = {}
     __export(uploadBlob_exports, {
-      toKnownErr: () => toKnownErr32
+      toKnownErr: () => toKnownErr30
     })
-    function toKnownErr32(e) {
+    function toKnownErr30(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -26901,7 +27147,7 @@ if (cid) {
       ExpiredTokenError: () => ExpiredTokenError,
       InvalidEmailError: () => InvalidEmailError,
       InvalidTokenError: () => InvalidTokenError,
-      toKnownErr: () => toKnownErr33
+      toKnownErr: () => toKnownErr31
     })
     var AccountNotFoundError = class extends XRPCError {
       constructor(src2) {
@@ -26923,7 +27169,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr33(e) {
+    function toKnownErr31(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'AccountNotFound') return new AccountNotFoundError(e)
         if (e.error === 'ExpiredToken') return new ExpiredTokenError(e)
@@ -26943,7 +27189,7 @@ if (cid) {
       InvalidPasswordError: () => InvalidPasswordError,
       UnresolvableDidError: () => UnresolvableDidError,
       UnsupportedDomainError: () => UnsupportedDomainError,
-      toKnownErr: () => toKnownErr34
+      toKnownErr: () => toKnownErr32
     })
     var InvalidHandleError2 = class extends XRPCError {
       constructor(src2) {
@@ -26980,7 +27226,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr34(e) {
+    function toKnownErr32(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'InvalidHandle') return new InvalidHandleError2(e)
         if (e.error === 'InvalidPassword') return new InvalidPasswordError(e)
@@ -27002,7 +27248,7 @@ if (cid) {
     __export(createAppPassword_exports, {
       AccountTakedownError: () => AccountTakedownError,
       isAppPassword: () => isAppPassword,
-      toKnownErr: () => toKnownErr35,
+      toKnownErr: () => toKnownErr33,
       validateAppPassword: () => validateAppPassword
     })
     var AccountTakedownError = class extends XRPCError {
@@ -27010,7 +27256,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr35(e) {
+    function toKnownErr33(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'AccountTakedown') return new AccountTakedownError(e)
       }
@@ -27033,9 +27279,9 @@ if (cid) {
     // src/client/types/com/atproto/server/createInviteCode.ts
     var createInviteCode_exports = {}
     __export(createInviteCode_exports, {
-      toKnownErr: () => toKnownErr36
+      toKnownErr: () => toKnownErr34
     })
-    function toKnownErr36(e) {
+    function toKnownErr34(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27045,10 +27291,10 @@ if (cid) {
     var createInviteCodes_exports = {}
     __export(createInviteCodes_exports, {
       isAccountCodes: () => isAccountCodes,
-      toKnownErr: () => toKnownErr37,
+      toKnownErr: () => toKnownErr35,
       validateAccountCodes: () => validateAccountCodes
     })
-    function toKnownErr37(e) {
+    function toKnownErr35(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27071,14 +27317,14 @@ if (cid) {
     var createSession_exports = {}
     __export(createSession_exports, {
       AccountTakedownError: () => AccountTakedownError2,
-      toKnownErr: () => toKnownErr38
+      toKnownErr: () => toKnownErr36
     })
     var AccountTakedownError2 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr38(e) {
+    function toKnownErr36(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'AccountTakedown') return new AccountTakedownError2(e)
       }
@@ -27086,11 +27332,11 @@ if (cid) {
     }
 
     // src/client/types/com/atproto/server/deleteAccount.ts
-    var deleteAccount_exports = {}
-    __export(deleteAccount_exports, {
+    var deleteAccount_exports2 = {}
+    __export(deleteAccount_exports2, {
       ExpiredTokenError: () => ExpiredTokenError2,
       InvalidTokenError: () => InvalidTokenError2,
-      toKnownErr: () => toKnownErr39
+      toKnownErr: () => toKnownErr37
     })
     var ExpiredTokenError2 = class extends XRPCError {
       constructor(src2) {
@@ -27102,7 +27348,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr39(e) {
+    function toKnownErr37(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'ExpiredToken') return new ExpiredTokenError2(e)
         if (e.error === 'InvalidToken') return new InvalidTokenError2(e)
@@ -27113,9 +27359,9 @@ if (cid) {
     // src/client/types/com/atproto/server/deleteSession.ts
     var deleteSession_exports = {}
     __export(deleteSession_exports, {
-      toKnownErr: () => toKnownErr40
+      toKnownErr: () => toKnownErr38
     })
-    function toKnownErr40(e) {
+    function toKnownErr38(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27125,10 +27371,10 @@ if (cid) {
     var describeServer_exports = {}
     __export(describeServer_exports, {
       isLinks: () => isLinks,
-      toKnownErr: () => toKnownErr41,
+      toKnownErr: () => toKnownErr39,
       validateLinks: () => validateLinks
     })
-    function toKnownErr41(e) {
+    function toKnownErr39(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27148,14 +27394,14 @@ if (cid) {
     var getAccountInviteCodes_exports = {}
     __export(getAccountInviteCodes_exports, {
       DuplicateCreateError: () => DuplicateCreateError,
-      toKnownErr: () => toKnownErr42
+      toKnownErr: () => toKnownErr40
     })
     var DuplicateCreateError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr42(e) {
+    function toKnownErr40(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'DuplicateCreate') return new DuplicateCreateError(e)
       }
@@ -27165,9 +27411,9 @@ if (cid) {
     // src/client/types/com/atproto/server/getSession.ts
     var getSession_exports = {}
     __export(getSession_exports, {
-      toKnownErr: () => toKnownErr43
+      toKnownErr: () => toKnownErr41
     })
-    function toKnownErr43(e) {
+    function toKnownErr41(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27178,7 +27424,7 @@ if (cid) {
     __export(listAppPasswords_exports, {
       AccountTakedownError: () => AccountTakedownError3,
       isAppPassword: () => isAppPassword2,
-      toKnownErr: () => toKnownErr44,
+      toKnownErr: () => toKnownErr42,
       validateAppPassword: () => validateAppPassword2
     })
     var AccountTakedownError3 = class extends XRPCError {
@@ -27186,7 +27432,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr44(e) {
+    function toKnownErr42(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'AccountTakedown') return new AccountTakedownError3(e)
       }
@@ -27210,14 +27456,14 @@ if (cid) {
     var refreshSession_exports = {}
     __export(refreshSession_exports, {
       AccountTakedownError: () => AccountTakedownError4,
-      toKnownErr: () => toKnownErr45
+      toKnownErr: () => toKnownErr43
     })
     var AccountTakedownError4 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr45(e) {
+    function toKnownErr43(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'AccountTakedown') return new AccountTakedownError4(e)
       }
@@ -27227,9 +27473,9 @@ if (cid) {
     // src/client/types/com/atproto/server/requestAccountDelete.ts
     var requestAccountDelete_exports = {}
     __export(requestAccountDelete_exports, {
-      toKnownErr: () => toKnownErr46
+      toKnownErr: () => toKnownErr44
     })
-    function toKnownErr46(e) {
+    function toKnownErr44(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27238,9 +27484,9 @@ if (cid) {
     // src/client/types/com/atproto/server/requestEmailConfirmation.ts
     var requestEmailConfirmation_exports = {}
     __export(requestEmailConfirmation_exports, {
-      toKnownErr: () => toKnownErr47
+      toKnownErr: () => toKnownErr45
     })
-    function toKnownErr47(e) {
+    function toKnownErr45(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27249,9 +27495,9 @@ if (cid) {
     // src/client/types/com/atproto/server/requestEmailUpdate.ts
     var requestEmailUpdate_exports = {}
     __export(requestEmailUpdate_exports, {
-      toKnownErr: () => toKnownErr48
+      toKnownErr: () => toKnownErr46
     })
-    function toKnownErr48(e) {
+    function toKnownErr46(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27260,9 +27506,9 @@ if (cid) {
     // src/client/types/com/atproto/server/requestPasswordReset.ts
     var requestPasswordReset_exports = {}
     __export(requestPasswordReset_exports, {
-      toKnownErr: () => toKnownErr49
+      toKnownErr: () => toKnownErr47
     })
-    function toKnownErr49(e) {
+    function toKnownErr47(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27271,9 +27517,9 @@ if (cid) {
     // src/client/types/com/atproto/server/reserveSigningKey.ts
     var reserveSigningKey_exports = {}
     __export(reserveSigningKey_exports, {
-      toKnownErr: () => toKnownErr50
+      toKnownErr: () => toKnownErr48
     })
-    function toKnownErr50(e) {
+    function toKnownErr48(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27284,7 +27530,7 @@ if (cid) {
     __export(resetPassword_exports, {
       ExpiredTokenError: () => ExpiredTokenError3,
       InvalidTokenError: () => InvalidTokenError3,
-      toKnownErr: () => toKnownErr51
+      toKnownErr: () => toKnownErr49
     })
     var ExpiredTokenError3 = class extends XRPCError {
       constructor(src2) {
@@ -27296,7 +27542,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr51(e) {
+    function toKnownErr49(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'ExpiredToken') return new ExpiredTokenError3(e)
         if (e.error === 'InvalidToken') return new InvalidTokenError3(e)
@@ -27307,9 +27553,9 @@ if (cid) {
     // src/client/types/com/atproto/server/revokeAppPassword.ts
     var revokeAppPassword_exports = {}
     __export(revokeAppPassword_exports, {
-      toKnownErr: () => toKnownErr52
+      toKnownErr: () => toKnownErr50
     })
-    function toKnownErr52(e) {
+    function toKnownErr50(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27321,7 +27567,7 @@ if (cid) {
       ExpiredTokenError: () => ExpiredTokenError4,
       InvalidTokenError: () => InvalidTokenError4,
       TokenRequiredError: () => TokenRequiredError,
-      toKnownErr: () => toKnownErr53
+      toKnownErr: () => toKnownErr51
     })
     var ExpiredTokenError4 = class extends XRPCError {
       constructor(src2) {
@@ -27338,7 +27584,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr53(e) {
+    function toKnownErr51(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'ExpiredToken') return new ExpiredTokenError4(e)
         if (e.error === 'InvalidToken') return new InvalidTokenError4(e)
@@ -27350,9 +27596,9 @@ if (cid) {
     // src/client/types/com/atproto/sync/getBlob.ts
     var getBlob_exports = {}
     __export(getBlob_exports, {
-      toKnownErr: () => toKnownErr54
+      toKnownErr: () => toKnownErr52
     })
-    function toKnownErr54(e) {
+    function toKnownErr52(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27361,9 +27607,9 @@ if (cid) {
     // src/client/types/com/atproto/sync/getBlocks.ts
     var getBlocks_exports = {}
     __export(getBlocks_exports, {
-      toKnownErr: () => toKnownErr55
+      toKnownErr: () => toKnownErr53
     })
-    function toKnownErr55(e) {
+    function toKnownErr53(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27372,9 +27618,9 @@ if (cid) {
     // src/client/types/com/atproto/sync/getCheckout.ts
     var getCheckout_exports = {}
     __export(getCheckout_exports, {
-      toKnownErr: () => toKnownErr56
+      toKnownErr: () => toKnownErr54
     })
-    function toKnownErr56(e) {
+    function toKnownErr54(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27384,14 +27630,14 @@ if (cid) {
     var getHead_exports = {}
     __export(getHead_exports, {
       HeadNotFoundError: () => HeadNotFoundError,
-      toKnownErr: () => toKnownErr57
+      toKnownErr: () => toKnownErr55
     })
     var HeadNotFoundError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr57(e) {
+    function toKnownErr55(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'HeadNotFound') return new HeadNotFoundError(e)
       }
@@ -27402,14 +27648,14 @@ if (cid) {
     var getLatestCommit_exports = {}
     __export(getLatestCommit_exports, {
       RepoNotFoundError: () => RepoNotFoundError2,
-      toKnownErr: () => toKnownErr58
+      toKnownErr: () => toKnownErr56
     })
     var RepoNotFoundError2 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr58(e) {
+    function toKnownErr56(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'RepoNotFound') return new RepoNotFoundError2(e)
       }
@@ -27419,9 +27665,9 @@ if (cid) {
     // src/client/types/com/atproto/sync/getRecord.ts
     var getRecord_exports3 = {}
     __export(getRecord_exports3, {
-      toKnownErr: () => toKnownErr59
+      toKnownErr: () => toKnownErr57
     })
-    function toKnownErr59(e) {
+    function toKnownErr57(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27430,9 +27676,9 @@ if (cid) {
     // src/client/types/com/atproto/sync/getRepo.ts
     var getRepo_exports2 = {}
     __export(getRepo_exports2, {
-      toKnownErr: () => toKnownErr60
+      toKnownErr: () => toKnownErr58
     })
-    function toKnownErr60(e) {
+    function toKnownErr58(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27441,9 +27687,9 @@ if (cid) {
     // src/client/types/com/atproto/sync/listBlobs.ts
     var listBlobs_exports = {}
     __export(listBlobs_exports, {
-      toKnownErr: () => toKnownErr61
+      toKnownErr: () => toKnownErr59
     })
-    function toKnownErr61(e) {
+    function toKnownErr59(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27453,10 +27699,10 @@ if (cid) {
     var listRepos_exports = {}
     __export(listRepos_exports, {
       isRepo: () => isRepo,
-      toKnownErr: () => toKnownErr62,
+      toKnownErr: () => toKnownErr60,
       validateRepo: () => validateRepo
     })
-    function toKnownErr62(e) {
+    function toKnownErr60(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27475,9 +27721,9 @@ if (cid) {
     // src/client/types/com/atproto/sync/notifyOfUpdate.ts
     var notifyOfUpdate_exports = {}
     __export(notifyOfUpdate_exports, {
-      toKnownErr: () => toKnownErr63
+      toKnownErr: () => toKnownErr61
     })
-    function toKnownErr63(e) {
+    function toKnownErr61(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27486,6 +27732,28 @@ if (cid) {
     // src/client/types/com/atproto/sync/requestCrawl.ts
     var requestCrawl_exports = {}
     __export(requestCrawl_exports, {
+      toKnownErr: () => toKnownErr62
+    })
+    function toKnownErr62(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/com/atproto/temp/fetchLabels.ts
+    var fetchLabels_exports = {}
+    __export(fetchLabels_exports, {
+      toKnownErr: () => toKnownErr63
+    })
+    function toKnownErr63(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/com/atproto/temp/importRepo.ts
+    var importRepo_exports = {}
+    __export(importRepo_exports, {
       toKnownErr: () => toKnownErr64
     })
     function toKnownErr64(e) {
@@ -27494,9 +27762,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/actor/getPreferences.ts
-    var getPreferences_exports = {}
-    __export(getPreferences_exports, {
+    // src/client/types/com/atproto/temp/pushBlob.ts
+    var pushBlob_exports = {}
+    __export(pushBlob_exports, {
       toKnownErr: () => toKnownErr65
     })
     function toKnownErr65(e) {
@@ -27505,20 +27773,73 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/actor/getProfile.ts
-    var getProfile_exports = {}
-    __export(getProfile_exports, {
+    // src/client/types/com/atproto/temp/transferAccount.ts
+    var transferAccount_exports = {}
+    __export(transferAccount_exports, {
+      HandleNotAvailableError: () => HandleNotAvailableError2,
+      IncompatibleDidDocError: () => IncompatibleDidDocError2,
+      InvalidHandleError: () => InvalidHandleError3,
+      InvalidInviteCodeError: () => InvalidInviteCodeError2,
+      InvalidPasswordError: () => InvalidPasswordError2,
+      UnresolvableDidError: () => UnresolvableDidError2,
+      UnsupportedDomainError: () => UnsupportedDomainError2,
       toKnownErr: () => toKnownErr66
     })
+    var InvalidHandleError3 = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
+    var InvalidPasswordError2 = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
+    var InvalidInviteCodeError2 = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
+    var HandleNotAvailableError2 = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
+    var UnsupportedDomainError2 = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
+    var UnresolvableDidError2 = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
+    var IncompatibleDidDocError2 = class extends XRPCError {
+      constructor(src2) {
+        super(src2.status, src2.error, src2.message, src2.headers)
+      }
+    }
     function toKnownErr66(e) {
       if (e instanceof XRPCError) {
+        if (e.error === 'InvalidHandle') return new InvalidHandleError3(e)
+        if (e.error === 'InvalidPassword') return new InvalidPasswordError2(e)
+        if (e.error === 'InvalidInviteCode')
+          return new InvalidInviteCodeError2(e)
+        if (e.error === 'HandleNotAvailable')
+          return new HandleNotAvailableError2(e)
+        if (e.error === 'UnsupportedDomain')
+          return new UnsupportedDomainError2(e)
+        if (e.error === 'UnresolvableDid') return new UnresolvableDidError2(e)
+        if (e.error === 'IncompatibleDidDoc')
+          return new IncompatibleDidDocError2(e)
       }
       return e
     }
 
-    // src/client/types/app/bsky/actor/getProfiles.ts
-    var getProfiles_exports = {}
-    __export(getProfiles_exports, {
+    // src/client/types/app/bsky/actor/getPreferences.ts
+    var getPreferences_exports = {}
+    __export(getPreferences_exports, {
       toKnownErr: () => toKnownErr67
     })
     function toKnownErr67(e) {
@@ -27527,9 +27848,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/actor/getSuggestions.ts
-    var getSuggestions_exports = {}
-    __export(getSuggestions_exports, {
+    // src/client/types/app/bsky/actor/getProfile.ts
+    var getProfile_exports = {}
+    __export(getProfile_exports, {
       toKnownErr: () => toKnownErr68
     })
     function toKnownErr68(e) {
@@ -27538,9 +27859,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/actor/putPreferences.ts
-    var putPreferences_exports = {}
-    __export(putPreferences_exports, {
+    // src/client/types/app/bsky/actor/getProfiles.ts
+    var getProfiles_exports = {}
+    __export(getProfiles_exports, {
       toKnownErr: () => toKnownErr69
     })
     function toKnownErr69(e) {
@@ -27549,9 +27870,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/actor/searchActors.ts
-    var searchActors_exports = {}
-    __export(searchActors_exports, {
+    // src/client/types/app/bsky/actor/getSuggestions.ts
+    var getSuggestions_exports = {}
+    __export(getSuggestions_exports, {
       toKnownErr: () => toKnownErr70
     })
     function toKnownErr70(e) {
@@ -27560,12 +27881,34 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/actor/searchActorsTypeahead.ts
-    var searchActorsTypeahead_exports = {}
-    __export(searchActorsTypeahead_exports, {
+    // src/client/types/app/bsky/actor/putPreferences.ts
+    var putPreferences_exports = {}
+    __export(putPreferences_exports, {
       toKnownErr: () => toKnownErr71
     })
     function toKnownErr71(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/actor/searchActors.ts
+    var searchActors_exports = {}
+    __export(searchActors_exports, {
+      toKnownErr: () => toKnownErr72
+    })
+    function toKnownErr72(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/actor/searchActorsTypeahead.ts
+    var searchActorsTypeahead_exports = {}
+    __export(searchActorsTypeahead_exports, {
+      toKnownErr: () => toKnownErr73
+    })
+    function toKnownErr73(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27576,11 +27919,11 @@ if (cid) {
     __export(describeFeedGenerator_exports, {
       isFeed: () => isFeed,
       isLinks: () => isLinks2,
-      toKnownErr: () => toKnownErr72,
+      toKnownErr: () => toKnownErr74,
       validateFeed: () => validateFeed,
       validateLinks: () => validateLinks2
     })
-    function toKnownErr72(e) {
+    function toKnownErr74(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27609,9 +27952,9 @@ if (cid) {
     // src/client/types/app/bsky/feed/getActorFeeds.ts
     var getActorFeeds_exports = {}
     __export(getActorFeeds_exports, {
-      toKnownErr: () => toKnownErr73
+      toKnownErr: () => toKnownErr75
     })
-    function toKnownErr73(e) {
+    function toKnownErr75(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27622,7 +27965,7 @@ if (cid) {
     __export(getActorLikes_exports, {
       BlockedActorError: () => BlockedActorError,
       BlockedByActorError: () => BlockedByActorError,
-      toKnownErr: () => toKnownErr74
+      toKnownErr: () => toKnownErr76
     })
     var BlockedActorError = class extends XRPCError {
       constructor(src2) {
@@ -27634,7 +27977,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr74(e) {
+    function toKnownErr76(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'BlockedActor') return new BlockedActorError(e)
         if (e.error === 'BlockedByActor') return new BlockedByActorError(e)
@@ -27647,7 +27990,7 @@ if (cid) {
     __export(getAuthorFeed_exports, {
       BlockedActorError: () => BlockedActorError2,
       BlockedByActorError: () => BlockedByActorError2,
-      toKnownErr: () => toKnownErr75
+      toKnownErr: () => toKnownErr77
     })
     var BlockedActorError2 = class extends XRPCError {
       constructor(src2) {
@@ -27659,7 +28002,7 @@ if (cid) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr75(e) {
+    function toKnownErr77(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'BlockedActor') return new BlockedActorError2(e)
         if (e.error === 'BlockedByActor') return new BlockedByActorError2(e)
@@ -27671,14 +28014,14 @@ if (cid) {
     var getFeed_exports = {}
     __export(getFeed_exports, {
       UnknownFeedError: () => UnknownFeedError,
-      toKnownErr: () => toKnownErr76
+      toKnownErr: () => toKnownErr78
     })
     var UnknownFeedError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr76(e) {
+    function toKnownErr78(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'UnknownFeed') return new UnknownFeedError(e)
       }
@@ -27688,9 +28031,9 @@ if (cid) {
     // src/client/types/app/bsky/feed/getFeedGenerator.ts
     var getFeedGenerator_exports = {}
     __export(getFeedGenerator_exports, {
-      toKnownErr: () => toKnownErr77
+      toKnownErr: () => toKnownErr79
     })
-    function toKnownErr77(e) {
+    function toKnownErr79(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27699,9 +28042,9 @@ if (cid) {
     // src/client/types/app/bsky/feed/getFeedGenerators.ts
     var getFeedGenerators_exports = {}
     __export(getFeedGenerators_exports, {
-      toKnownErr: () => toKnownErr78
+      toKnownErr: () => toKnownErr80
     })
-    function toKnownErr78(e) {
+    function toKnownErr80(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27711,14 +28054,14 @@ if (cid) {
     var getFeedSkeleton_exports = {}
     __export(getFeedSkeleton_exports, {
       UnknownFeedError: () => UnknownFeedError2,
-      toKnownErr: () => toKnownErr79
+      toKnownErr: () => toKnownErr81
     })
     var UnknownFeedError2 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr79(e) {
+    function toKnownErr81(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'UnknownFeed') return new UnknownFeedError2(e)
       }
@@ -27729,10 +28072,10 @@ if (cid) {
     var getLikes_exports = {}
     __export(getLikes_exports, {
       isLike: () => isLike,
-      toKnownErr: () => toKnownErr80,
+      toKnownErr: () => toKnownErr82,
       validateLike: () => validateLike
     })
-    function toKnownErr80(e) {
+    function toKnownErr82(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27752,14 +28095,14 @@ if (cid) {
     var getListFeed_exports = {}
     __export(getListFeed_exports, {
       UnknownListError: () => UnknownListError,
-      toKnownErr: () => toKnownErr81
+      toKnownErr: () => toKnownErr83
     })
     var UnknownListError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr81(e) {
+    function toKnownErr83(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'UnknownList') return new UnknownListError(e)
       }
@@ -27770,14 +28113,14 @@ if (cid) {
     var getPostThread_exports = {}
     __export(getPostThread_exports, {
       NotFoundError: () => NotFoundError,
-      toKnownErr: () => toKnownErr82
+      toKnownErr: () => toKnownErr84
     })
     var NotFoundError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr82(e) {
+    function toKnownErr84(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'NotFound') return new NotFoundError(e)
       }
@@ -27787,28 +28130,6 @@ if (cid) {
     // src/client/types/app/bsky/feed/getPosts.ts
     var getPosts_exports = {}
     __export(getPosts_exports, {
-      toKnownErr: () => toKnownErr83
-    })
-    function toKnownErr83(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
-    // src/client/types/app/bsky/feed/getRepostedBy.ts
-    var getRepostedBy_exports = {}
-    __export(getRepostedBy_exports, {
-      toKnownErr: () => toKnownErr84
-    })
-    function toKnownErr84(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
-    // src/client/types/app/bsky/feed/getSuggestedFeeds.ts
-    var getSuggestedFeeds_exports = {}
-    __export(getSuggestedFeeds_exports, {
       toKnownErr: () => toKnownErr85
     })
     function toKnownErr85(e) {
@@ -27817,12 +28138,34 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/feed/getTimeline.ts
-    var getTimeline_exports = {}
-    __export(getTimeline_exports, {
+    // src/client/types/app/bsky/feed/getRepostedBy.ts
+    var getRepostedBy_exports = {}
+    __export(getRepostedBy_exports, {
       toKnownErr: () => toKnownErr86
     })
     function toKnownErr86(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/feed/getSuggestedFeeds.ts
+    var getSuggestedFeeds_exports = {}
+    __export(getSuggestedFeeds_exports, {
+      toKnownErr: () => toKnownErr87
+    })
+    function toKnownErr87(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/feed/getTimeline.ts
+    var getTimeline_exports = {}
+    __export(getTimeline_exports, {
+      toKnownErr: () => toKnownErr88
+    })
+    function toKnownErr88(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -27832,14 +28175,14 @@ if (cid) {
     var searchPosts_exports = {}
     __export(searchPosts_exports, {
       BadQueryStringError: () => BadQueryStringError,
-      toKnownErr: () => toKnownErr87
+      toKnownErr: () => toKnownErr89
     })
     var BadQueryStringError = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr87(e) {
+    function toKnownErr89(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'BadQueryString') return new BadQueryStringError(e)
       }
@@ -27849,28 +28192,6 @@ if (cid) {
     // src/client/types/app/bsky/graph/getBlocks.ts
     var getBlocks_exports2 = {}
     __export(getBlocks_exports2, {
-      toKnownErr: () => toKnownErr88
-    })
-    function toKnownErr88(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
-    // src/client/types/app/bsky/graph/getFollowers.ts
-    var getFollowers_exports = {}
-    __export(getFollowers_exports, {
-      toKnownErr: () => toKnownErr89
-    })
-    function toKnownErr89(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
-    // src/client/types/app/bsky/graph/getFollows.ts
-    var getFollows_exports = {}
-    __export(getFollows_exports, {
       toKnownErr: () => toKnownErr90
     })
     function toKnownErr90(e) {
@@ -27879,9 +28200,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/getList.ts
-    var getList_exports = {}
-    __export(getList_exports, {
+    // src/client/types/app/bsky/graph/getFollowers.ts
+    var getFollowers_exports = {}
+    __export(getFollowers_exports, {
       toKnownErr: () => toKnownErr91
     })
     function toKnownErr91(e) {
@@ -27890,9 +28211,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/getListBlocks.ts
-    var getListBlocks_exports = {}
-    __export(getListBlocks_exports, {
+    // src/client/types/app/bsky/graph/getFollows.ts
+    var getFollows_exports = {}
+    __export(getFollows_exports, {
       toKnownErr: () => toKnownErr92
     })
     function toKnownErr92(e) {
@@ -27901,9 +28222,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/getListMutes.ts
-    var getListMutes_exports = {}
-    __export(getListMutes_exports, {
+    // src/client/types/app/bsky/graph/getList.ts
+    var getList_exports = {}
+    __export(getList_exports, {
       toKnownErr: () => toKnownErr93
     })
     function toKnownErr93(e) {
@@ -27912,9 +28233,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/getLists.ts
-    var getLists_exports = {}
-    __export(getLists_exports, {
+    // src/client/types/app/bsky/graph/getListBlocks.ts
+    var getListBlocks_exports = {}
+    __export(getListBlocks_exports, {
       toKnownErr: () => toKnownErr94
     })
     function toKnownErr94(e) {
@@ -27923,9 +28244,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/getMutes.ts
-    var getMutes_exports = {}
-    __export(getMutes_exports, {
+    // src/client/types/app/bsky/graph/getListMutes.ts
+    var getListMutes_exports = {}
+    __export(getListMutes_exports, {
       toKnownErr: () => toKnownErr95
     })
     function toKnownErr95(e) {
@@ -27934,9 +28255,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/getSuggestedFollowsByActor.ts
-    var getSuggestedFollowsByActor_exports = {}
-    __export(getSuggestedFollowsByActor_exports, {
+    // src/client/types/app/bsky/graph/getLists.ts
+    var getLists_exports = {}
+    __export(getLists_exports, {
       toKnownErr: () => toKnownErr96
     })
     function toKnownErr96(e) {
@@ -27945,9 +28266,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/muteActor.ts
-    var muteActor_exports = {}
-    __export(muteActor_exports, {
+    // src/client/types/app/bsky/graph/getMutes.ts
+    var getMutes_exports = {}
+    __export(getMutes_exports, {
       toKnownErr: () => toKnownErr97
     })
     function toKnownErr97(e) {
@@ -27956,9 +28277,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/muteActorList.ts
-    var muteActorList_exports = {}
-    __export(muteActorList_exports, {
+    // src/client/types/app/bsky/graph/getSuggestedFollowsByActor.ts
+    var getSuggestedFollowsByActor_exports = {}
+    __export(getSuggestedFollowsByActor_exports, {
       toKnownErr: () => toKnownErr98
     })
     function toKnownErr98(e) {
@@ -27967,9 +28288,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/unmuteActor.ts
-    var unmuteActor_exports = {}
-    __export(unmuteActor_exports, {
+    // src/client/types/app/bsky/graph/muteActor.ts
+    var muteActor_exports = {}
+    __export(muteActor_exports, {
       toKnownErr: () => toKnownErr99
     })
     function toKnownErr99(e) {
@@ -27978,9 +28299,9 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/graph/unmuteActorList.ts
-    var unmuteActorList_exports = {}
-    __export(unmuteActorList_exports, {
+    // src/client/types/app/bsky/graph/muteActorList.ts
+    var muteActorList_exports = {}
+    __export(muteActorList_exports, {
       toKnownErr: () => toKnownErr100
     })
     function toKnownErr100(e) {
@@ -27989,12 +28310,34 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/notification/getUnreadCount.ts
-    var getUnreadCount_exports = {}
-    __export(getUnreadCount_exports, {
+    // src/client/types/app/bsky/graph/unmuteActor.ts
+    var unmuteActor_exports = {}
+    __export(unmuteActor_exports, {
       toKnownErr: () => toKnownErr101
     })
     function toKnownErr101(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/graph/unmuteActorList.ts
+    var unmuteActorList_exports = {}
+    __export(unmuteActorList_exports, {
+      toKnownErr: () => toKnownErr102
+    })
+    function toKnownErr102(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/notification/getUnreadCount.ts
+    var getUnreadCount_exports = {}
+    __export(getUnreadCount_exports, {
+      toKnownErr: () => toKnownErr103
+    })
+    function toKnownErr103(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -28004,10 +28347,10 @@ if (cid) {
     var listNotifications_exports = {}
     __export(listNotifications_exports, {
       isNotification: () => isNotification,
-      toKnownErr: () => toKnownErr102,
+      toKnownErr: () => toKnownErr104,
       validateNotification: () => validateNotification
     })
-    function toKnownErr102(e) {
+    function toKnownErr104(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -28029,28 +28372,6 @@ if (cid) {
     // src/client/types/app/bsky/notification/registerPush.ts
     var registerPush_exports = {}
     __export(registerPush_exports, {
-      toKnownErr: () => toKnownErr103
-    })
-    function toKnownErr103(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
-    // src/client/types/app/bsky/notification/updateSeen.ts
-    var updateSeen_exports = {}
-    __export(updateSeen_exports, {
-      toKnownErr: () => toKnownErr104
-    })
-    function toKnownErr104(e) {
-      if (e instanceof XRPCError) {
-      }
-      return e
-    }
-
-    // src/client/types/app/bsky/unspecced/getPopular.ts
-    var getPopular_exports = {}
-    __export(getPopular_exports, {
       toKnownErr: () => toKnownErr105
     })
     function toKnownErr105(e) {
@@ -28059,12 +28380,34 @@ if (cid) {
       return e
     }
 
-    // src/client/types/app/bsky/unspecced/getPopularFeedGenerators.ts
-    var getPopularFeedGenerators_exports = {}
-    __export(getPopularFeedGenerators_exports, {
+    // src/client/types/app/bsky/notification/updateSeen.ts
+    var updateSeen_exports = {}
+    __export(updateSeen_exports, {
       toKnownErr: () => toKnownErr106
     })
     function toKnownErr106(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/unspecced/getPopular.ts
+    var getPopular_exports = {}
+    __export(getPopular_exports, {
+      toKnownErr: () => toKnownErr107
+    })
+    function toKnownErr107(e) {
+      if (e instanceof XRPCError) {
+      }
+      return e
+    }
+
+    // src/client/types/app/bsky/unspecced/getPopularFeedGenerators.ts
+    var getPopularFeedGenerators_exports = {}
+    __export(getPopularFeedGenerators_exports, {
+      toKnownErr: () => toKnownErr108
+    })
+    function toKnownErr108(e) {
       if (e instanceof XRPCError) {
       }
       return e
@@ -28074,14 +28417,14 @@ if (cid) {
     var getTimelineSkeleton_exports = {}
     __export(getTimelineSkeleton_exports, {
       UnknownFeedError: () => UnknownFeedError3,
-      toKnownErr: () => toKnownErr107
+      toKnownErr: () => toKnownErr109
     })
     var UnknownFeedError3 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr107(e) {
+    function toKnownErr109(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'UnknownFeed') return new UnknownFeedError3(e)
       }
@@ -28092,14 +28435,14 @@ if (cid) {
     var searchActorsSkeleton_exports = {}
     __export(searchActorsSkeleton_exports, {
       BadQueryStringError: () => BadQueryStringError2,
-      toKnownErr: () => toKnownErr108
+      toKnownErr: () => toKnownErr110
     })
     var BadQueryStringError2 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr108(e) {
+    function toKnownErr110(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'BadQueryString') return new BadQueryStringError2(e)
       }
@@ -28110,14 +28453,14 @@ if (cid) {
     var searchPostsSkeleton_exports = {}
     __export(searchPostsSkeleton_exports, {
       BadQueryStringError: () => BadQueryStringError3,
-      toKnownErr: () => toKnownErr109
+      toKnownErr: () => toKnownErr111
     })
     var BadQueryStringError3 = class extends XRPCError {
       constructor(src2) {
         super(src2.status, src2.error, src2.message, src2.headers)
       }
     }
-    function toKnownErr109(e) {
+    function toKnownErr111(e) {
       if (e instanceof XRPCError) {
         if (e.error === 'BadQueryString') return new BadQueryStringError3(e)
       }
@@ -28127,17 +28470,24 @@ if (cid) {
     // src/client/types/com/atproto/admin/defs.ts
     var defs_exports = {}
     __export(defs_exports, {
-      ACKNOWLEDGE: () => ACKNOWLEDGE,
-      ESCALATE: () => ESCALATE,
-      FLAG: () => FLAG,
-      TAKEDOWN: () => TAKEDOWN,
+      REVIEWCLOSED: () => REVIEWCLOSED,
+      REVIEWESCALATED: () => REVIEWESCALATED,
+      REVIEWOPEN: () => REVIEWOPEN,
       isAccountView: () => isAccountView,
-      isActionReversal: () => isActionReversal,
-      isActionView: () => isActionView,
-      isActionViewCurrent: () => isActionViewCurrent,
-      isActionViewDetail: () => isActionViewDetail,
       isBlobView: () => isBlobView,
       isImageDetails: () => isImageDetails,
+      isModEventAcknowledge: () => isModEventAcknowledge,
+      isModEventComment: () => isModEventComment,
+      isModEventEmail: () => isModEventEmail,
+      isModEventEscalate: () => isModEventEscalate,
+      isModEventLabel: () => isModEventLabel,
+      isModEventMute: () => isModEventMute,
+      isModEventReport: () => isModEventReport,
+      isModEventReverseTakedown: () => isModEventReverseTakedown,
+      isModEventTakedown: () => isModEventTakedown,
+      isModEventUnmute: () => isModEventUnmute,
+      isModEventView: () => isModEventView,
+      isModEventViewDetail: () => isModEventViewDetail,
       isModeration: () => isModeration,
       isModerationDetail: () => isModerationDetail,
       isRecordView: () => isRecordView,
@@ -28151,14 +28501,23 @@ if (cid) {
       isReportView: () => isReportView,
       isReportViewDetail: () => isReportViewDetail,
       isStatusAttr: () => isStatusAttr,
+      isSubjectStatusView: () => isSubjectStatusView,
       isVideoDetails: () => isVideoDetails,
       validateAccountView: () => validateAccountView,
-      validateActionReversal: () => validateActionReversal,
-      validateActionView: () => validateActionView,
-      validateActionViewCurrent: () => validateActionViewCurrent,
-      validateActionViewDetail: () => validateActionViewDetail,
       validateBlobView: () => validateBlobView,
       validateImageDetails: () => validateImageDetails,
+      validateModEventAcknowledge: () => validateModEventAcknowledge,
+      validateModEventComment: () => validateModEventComment,
+      validateModEventEmail: () => validateModEventEmail,
+      validateModEventEscalate: () => validateModEventEscalate,
+      validateModEventLabel: () => validateModEventLabel,
+      validateModEventMute: () => validateModEventMute,
+      validateModEventReport: () => validateModEventReport,
+      validateModEventReverseTakedown: () => validateModEventReverseTakedown,
+      validateModEventTakedown: () => validateModEventTakedown,
+      validateModEventUnmute: () => validateModEventUnmute,
+      validateModEventView: () => validateModEventView,
+      validateModEventViewDetail: () => validateModEventViewDetail,
       validateModeration: () => validateModeration,
       validateModerationDetail: () => validateModerationDetail,
       validateRecordView: () => validateRecordView,
@@ -28172,6 +28531,7 @@ if (cid) {
       validateReportView: () => validateReportView,
       validateReportViewDetail: () => validateReportViewDetail,
       validateStatusAttr: () => validateStatusAttr,
+      validateSubjectStatusView: () => validateSubjectStatusView,
       validateVideoDetails: () => validateVideoDetails
     })
     function isStatusAttr(v) {
@@ -28184,50 +28544,26 @@ if (cid) {
     function validateStatusAttr(v) {
       return lexicons.validate('com.atproto.admin.defs#statusAttr', v)
     }
-    function isActionView(v) {
+    function isModEventView(v) {
       return (
         isObj2(v) &&
         hasProp2(v, '$type') &&
-        v.$type === 'com.atproto.admin.defs#actionView'
+        v.$type === 'com.atproto.admin.defs#modEventView'
       )
     }
-    function validateActionView(v) {
-      return lexicons.validate('com.atproto.admin.defs#actionView', v)
+    function validateModEventView(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventView', v)
     }
-    function isActionViewDetail(v) {
+    function isModEventViewDetail(v) {
       return (
         isObj2(v) &&
         hasProp2(v, '$type') &&
-        v.$type === 'com.atproto.admin.defs#actionViewDetail'
+        v.$type === 'com.atproto.admin.defs#modEventViewDetail'
       )
     }
-    function validateActionViewDetail(v) {
-      return lexicons.validate('com.atproto.admin.defs#actionViewDetail', v)
+    function validateModEventViewDetail(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventViewDetail', v)
     }
-    function isActionViewCurrent(v) {
-      return (
-        isObj2(v) &&
-        hasProp2(v, '$type') &&
-        v.$type === 'com.atproto.admin.defs#actionViewCurrent'
-      )
-    }
-    function validateActionViewCurrent(v) {
-      return lexicons.validate('com.atproto.admin.defs#actionViewCurrent', v)
-    }
-    function isActionReversal(v) {
-      return (
-        isObj2(v) &&
-        hasProp2(v, '$type') &&
-        v.$type === 'com.atproto.admin.defs#actionReversal'
-      )
-    }
-    function validateActionReversal(v) {
-      return lexicons.validate('com.atproto.admin.defs#actionReversal', v)
-    }
-    var TAKEDOWN = 'com.atproto.admin.defs#takedown'
-    var FLAG = 'com.atproto.admin.defs#flag'
-    var ACKNOWLEDGE = 'com.atproto.admin.defs#acknowledge'
-    var ESCALATE = 'com.atproto.admin.defs#escalate'
     function isReportView(v) {
       return (
         isObj2(v) &&
@@ -28237,6 +28573,16 @@ if (cid) {
     }
     function validateReportView(v) {
       return lexicons.validate('com.atproto.admin.defs#reportView', v)
+    }
+    function isSubjectStatusView(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#subjectStatusView'
+      )
+    }
+    function validateSubjectStatusView(v) {
+      return lexicons.validate('com.atproto.admin.defs#subjectStatusView', v)
     }
     function isReportViewDetail(v) {
       return (
@@ -28387,6 +28733,112 @@ if (cid) {
     }
     function validateVideoDetails(v) {
       return lexicons.validate('com.atproto.admin.defs#videoDetails', v)
+    }
+    var REVIEWOPEN = 'com.atproto.admin.defs#reviewOpen'
+    var REVIEWESCALATED = 'com.atproto.admin.defs#reviewEscalated'
+    var REVIEWCLOSED = 'com.atproto.admin.defs#reviewClosed'
+    function isModEventTakedown(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventTakedown'
+      )
+    }
+    function validateModEventTakedown(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventTakedown', v)
+    }
+    function isModEventReverseTakedown(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventReverseTakedown'
+      )
+    }
+    function validateModEventReverseTakedown(v) {
+      return lexicons.validate(
+        'com.atproto.admin.defs#modEventReverseTakedown',
+        v
+      )
+    }
+    function isModEventComment(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventComment'
+      )
+    }
+    function validateModEventComment(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventComment', v)
+    }
+    function isModEventReport(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventReport'
+      )
+    }
+    function validateModEventReport(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventReport', v)
+    }
+    function isModEventLabel(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventLabel'
+      )
+    }
+    function validateModEventLabel(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventLabel', v)
+    }
+    function isModEventAcknowledge(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventAcknowledge'
+      )
+    }
+    function validateModEventAcknowledge(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventAcknowledge', v)
+    }
+    function isModEventEscalate(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventEscalate'
+      )
+    }
+    function validateModEventEscalate(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventEscalate', v)
+    }
+    function isModEventMute(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventMute'
+      )
+    }
+    function validateModEventMute(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventMute', v)
+    }
+    function isModEventUnmute(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventUnmute'
+      )
+    }
+    function validateModEventUnmute(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventUnmute', v)
+    }
+    function isModEventEmail(v) {
+      return (
+        isObj2(v) &&
+        hasProp2(v, '$type') &&
+        v.$type === 'com.atproto.admin.defs#modEventEmail'
+      )
+    }
+    function validateModEventEmail(v) {
+      return lexicons.validate('com.atproto.admin.defs#modEventEmail', v)
     }
 
     // src/client/types/com/atproto/label/defs.ts
@@ -28976,7 +29428,6 @@ if (cid) {
       isThreadViewPost: () => isThreadViewPost,
       isThreadgateView: () => isThreadgateView,
       isViewerState: () => isViewerState2,
-      isViewerThreadState: () => isViewerThreadState,
       validateBlockedAuthor: () => validateBlockedAuthor,
       validateBlockedPost: () => validateBlockedPost,
       validateFeedViewPost: () => validateFeedViewPost,
@@ -28990,8 +29441,7 @@ if (cid) {
       validateSkeletonReasonRepost: () => validateSkeletonReasonRepost,
       validateThreadViewPost: () => validateThreadViewPost,
       validateThreadgateView: () => validateThreadgateView,
-      validateViewerState: () => validateViewerState2,
-      validateViewerThreadState: () => validateViewerThreadState
+      validateViewerState: () => validateViewerState2
     })
     function isPostView(v) {
       return (
@@ -29082,16 +29532,6 @@ if (cid) {
     }
     function validateBlockedAuthor(v) {
       return lexicons.validate('app.bsky.feed.defs#blockedAuthor', v)
-    }
-    function isViewerThreadState(v) {
-      return (
-        isObj2(v) &&
-        hasProp2(v, '$type') &&
-        v.$type === 'app.bsky.feed.defs#viewerThreadState'
-      )
-    }
-    function validateViewerThreadState(v) {
-      return lexicons.validate('app.bsky.feed.defs#viewerThreadState', v)
     }
     function isGeneratorView(v) {
       return (
@@ -29550,10 +29990,9 @@ if (cid) {
 
     // src/client/index.ts
     var COM_ATPROTO_ADMIN = {
-      DefsTakedown: 'com.atproto.admin.defs#takedown',
-      DefsFlag: 'com.atproto.admin.defs#flag',
-      DefsAcknowledge: 'com.atproto.admin.defs#acknowledge',
-      DefsEscalate: 'com.atproto.admin.defs#escalate'
+      DefsReviewOpen: 'com.atproto.admin.defs#reviewOpen',
+      DefsReviewEscalated: 'com.atproto.admin.defs#reviewEscalated',
+      DefsReviewClosed: 'com.atproto.admin.defs#reviewClosed'
     }
     var COM_ATPROTO_MODERATION = {
       DefsReasonSpam: 'com.atproto.moderation.defs#reasonSpam',
@@ -29603,160 +30042,147 @@ if (cid) {
         this.repo = new RepoNS(service2)
         this.server = new ServerNS(service2)
         this.sync = new SyncNS(service2)
+        this.temp = new TempNS(service2)
       }
     }
     var AdminNS = class {
       constructor(service2) {
         this._service = service2
       }
+      deleteAccount(data, opts) {
+        return this._service.xrpc
+          .call('com.atproto.admin.deleteAccount', opts?.qp, data, opts)
+          .catch((e) => {
+            throw toKnownErr(e)
+          })
+      }
       disableAccountInvites(data, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.disableAccountInvites', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr(e)
+            throw toKnownErr2(e)
           })
       }
       disableInviteCodes(data, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.disableInviteCodes', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr2(e)
+            throw toKnownErr3(e)
+          })
+      }
+      emitModerationEvent(data, opts) {
+        return this._service.xrpc
+          .call('com.atproto.admin.emitModerationEvent', opts?.qp, data, opts)
+          .catch((e) => {
+            throw toKnownErr4(e)
           })
       }
       enableAccountInvites(data, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.enableAccountInvites', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr3(e)
+            throw toKnownErr5(e)
           })
       }
       getAccountInfo(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.getAccountInfo', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr4(e)
+            throw toKnownErr6(e)
           })
       }
       getInviteCodes(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.getInviteCodes', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr5(e)
-          })
-      }
-      getModerationAction(params2, opts) {
-        return this._service.xrpc
-          .call('com.atproto.admin.getModerationAction', params2, void 0, opts)
-          .catch((e) => {
-            throw toKnownErr6(e)
-          })
-      }
-      getModerationActions(params2, opts) {
-        return this._service.xrpc
-          .call('com.atproto.admin.getModerationActions', params2, void 0, opts)
-          .catch((e) => {
             throw toKnownErr7(e)
           })
       }
-      getModerationReport(params2, opts) {
+      getModerationEvent(params2, opts) {
         return this._service.xrpc
-          .call('com.atproto.admin.getModerationReport', params2, void 0, opts)
+          .call('com.atproto.admin.getModerationEvent', params2, void 0, opts)
           .catch((e) => {
             throw toKnownErr8(e)
-          })
-      }
-      getModerationReports(params2, opts) {
-        return this._service.xrpc
-          .call('com.atproto.admin.getModerationReports', params2, void 0, opts)
-          .catch((e) => {
-            throw toKnownErr9(e)
           })
       }
       getRecord(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.getRecord', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr10(e)
+            throw toKnownErr9(e)
           })
       }
       getRepo(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.getRepo', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr11(e)
+            throw toKnownErr10(e)
           })
       }
       getSubjectStatus(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.getSubjectStatus', params2, void 0, opts)
           .catch((e) => {
+            throw toKnownErr11(e)
+          })
+      }
+      queryModerationEvents(params2, opts) {
+        return this._service.xrpc
+          .call(
+            'com.atproto.admin.queryModerationEvents',
+            params2,
+            void 0,
+            opts
+          )
+          .catch((e) => {
             throw toKnownErr12(e)
           })
       }
-      resolveModerationReports(data, opts) {
+      queryModerationStatuses(params2, opts) {
         return this._service.xrpc
           .call(
-            'com.atproto.admin.resolveModerationReports',
-            opts?.qp,
-            data,
+            'com.atproto.admin.queryModerationStatuses',
+            params2,
+            void 0,
             opts
           )
           .catch((e) => {
             throw toKnownErr13(e)
           })
       }
-      reverseModerationAction(data, opts) {
-        return this._service.xrpc
-          .call(
-            'com.atproto.admin.reverseModerationAction',
-            opts?.qp,
-            data,
-            opts
-          )
-          .catch((e) => {
-            throw toKnownErr14(e)
-          })
-      }
       searchRepos(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.searchRepos', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr15(e)
+            throw toKnownErr14(e)
           })
       }
       sendEmail(data, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.sendEmail', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr16(e)
-          })
-      }
-      takeModerationAction(data, opts) {
-        return this._service.xrpc
-          .call('com.atproto.admin.takeModerationAction', opts?.qp, data, opts)
-          .catch((e) => {
-            throw toKnownErr17(e)
+            throw toKnownErr15(e)
           })
       }
       updateAccountEmail(data, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.updateAccountEmail', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr18(e)
+            throw toKnownErr16(e)
           })
       }
       updateAccountHandle(data, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.updateAccountHandle', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr19(e)
+            throw toKnownErr17(e)
           })
       }
       updateSubjectStatus(data, opts) {
         return this._service.xrpc
           .call('com.atproto.admin.updateSubjectStatus', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr20(e)
+            throw toKnownErr18(e)
           })
       }
     }
@@ -29768,14 +30194,14 @@ if (cid) {
         return this._service.xrpc
           .call('com.atproto.identity.resolveHandle', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr21(e)
+            throw toKnownErr19(e)
           })
       }
       updateHandle(data, opts) {
         return this._service.xrpc
           .call('com.atproto.identity.updateHandle', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr22(e)
+            throw toKnownErr20(e)
           })
       }
     }
@@ -29787,7 +30213,7 @@ if (cid) {
         return this._service.xrpc
           .call('com.atproto.label.queryLabels', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr23(e)
+            throw toKnownErr21(e)
           })
       }
     }
@@ -29799,7 +30225,7 @@ if (cid) {
         return this._service.xrpc
           .call('com.atproto.moderation.createReport', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr24(e)
+            throw toKnownErr22(e)
           })
       }
     }
@@ -29811,56 +30237,56 @@ if (cid) {
         return this._service.xrpc
           .call('com.atproto.repo.applyWrites', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr25(e)
+            throw toKnownErr23(e)
           })
       }
       createRecord(data, opts) {
         return this._service.xrpc
           .call('com.atproto.repo.createRecord', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr26(e)
+            throw toKnownErr24(e)
           })
       }
       deleteRecord(data, opts) {
         return this._service.xrpc
           .call('com.atproto.repo.deleteRecord', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr27(e)
+            throw toKnownErr25(e)
           })
       }
       describeRepo(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.repo.describeRepo', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr28(e)
+            throw toKnownErr26(e)
           })
       }
       getRecord(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.repo.getRecord', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr29(e)
+            throw toKnownErr27(e)
           })
       }
       listRecords(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.repo.listRecords', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr30(e)
+            throw toKnownErr28(e)
           })
       }
       putRecord(data, opts) {
         return this._service.xrpc
           .call('com.atproto.repo.putRecord', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr31(e)
+            throw toKnownErr29(e)
           })
       }
       uploadBlob(data, opts) {
         return this._service.xrpc
           .call('com.atproto.repo.uploadBlob', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr32(e)
+            throw toKnownErr30(e)
           })
       }
     }
@@ -29872,63 +30298,63 @@ if (cid) {
         return this._service.xrpc
           .call('com.atproto.server.confirmEmail', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr33(e)
+            throw toKnownErr31(e)
           })
       }
       createAccount(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.createAccount', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr34(e)
+            throw toKnownErr32(e)
           })
       }
       createAppPassword(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.createAppPassword', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr35(e)
+            throw toKnownErr33(e)
           })
       }
       createInviteCode(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.createInviteCode', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr36(e)
+            throw toKnownErr34(e)
           })
       }
       createInviteCodes(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.createInviteCodes', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr37(e)
+            throw toKnownErr35(e)
           })
       }
       createSession(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.createSession', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr38(e)
+            throw toKnownErr36(e)
           })
       }
       deleteAccount(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.deleteAccount', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr39(e)
+            throw toKnownErr37(e)
           })
       }
       deleteSession(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.deleteSession', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr40(e)
+            throw toKnownErr38(e)
           })
       }
       describeServer(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.server.describeServer', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr41(e)
+            throw toKnownErr39(e)
           })
       }
       getAccountInviteCodes(params2, opts) {
@@ -29940,35 +30366,35 @@ if (cid) {
             opts
           )
           .catch((e) => {
-            throw toKnownErr42(e)
+            throw toKnownErr40(e)
           })
       }
       getSession(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.server.getSession', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr43(e)
+            throw toKnownErr41(e)
           })
       }
       listAppPasswords(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.server.listAppPasswords', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr44(e)
+            throw toKnownErr42(e)
           })
       }
       refreshSession(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.refreshSession', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr45(e)
+            throw toKnownErr43(e)
           })
       }
       requestAccountDelete(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.requestAccountDelete', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr46(e)
+            throw toKnownErr44(e)
           })
       }
       requestEmailConfirmation(data, opts) {
@@ -29980,49 +30406,49 @@ if (cid) {
             opts
           )
           .catch((e) => {
-            throw toKnownErr47(e)
+            throw toKnownErr45(e)
           })
       }
       requestEmailUpdate(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.requestEmailUpdate', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr48(e)
+            throw toKnownErr46(e)
           })
       }
       requestPasswordReset(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.requestPasswordReset', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr49(e)
+            throw toKnownErr47(e)
           })
       }
       reserveSigningKey(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.reserveSigningKey', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr50(e)
+            throw toKnownErr48(e)
           })
       }
       resetPassword(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.resetPassword', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr51(e)
+            throw toKnownErr49(e)
           })
       }
       revokeAppPassword(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.revokeAppPassword', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr52(e)
+            throw toKnownErr50(e)
           })
       }
       updateEmail(data, opts) {
         return this._service.xrpc
           .call('com.atproto.server.updateEmail', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr53(e)
+            throw toKnownErr51(e)
           })
       }
     }
@@ -30034,77 +30460,110 @@ if (cid) {
         return this._service.xrpc
           .call('com.atproto.sync.getBlob', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr54(e)
+            throw toKnownErr52(e)
           })
       }
       getBlocks(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.getBlocks', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr55(e)
+            throw toKnownErr53(e)
           })
       }
       getCheckout(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.getCheckout', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr56(e)
+            throw toKnownErr54(e)
           })
       }
       getHead(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.getHead', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr57(e)
+            throw toKnownErr55(e)
           })
       }
       getLatestCommit(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.getLatestCommit', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr58(e)
+            throw toKnownErr56(e)
           })
       }
       getRecord(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.getRecord', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr59(e)
+            throw toKnownErr57(e)
           })
       }
       getRepo(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.getRepo', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr60(e)
+            throw toKnownErr58(e)
           })
       }
       listBlobs(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.listBlobs', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr61(e)
+            throw toKnownErr59(e)
           })
       }
       listRepos(params2, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.listRepos', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr62(e)
+            throw toKnownErr60(e)
           })
       }
       notifyOfUpdate(data, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.notifyOfUpdate', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr63(e)
+            throw toKnownErr61(e)
           })
       }
       requestCrawl(data, opts) {
         return this._service.xrpc
           .call('com.atproto.sync.requestCrawl', opts?.qp, data, opts)
           .catch((e) => {
+            throw toKnownErr62(e)
+          })
+      }
+    }
+    var TempNS = class {
+      constructor(service2) {
+        this._service = service2
+      }
+      fetchLabels(params2, opts) {
+        return this._service.xrpc
+          .call('com.atproto.temp.fetchLabels', params2, void 0, opts)
+          .catch((e) => {
+            throw toKnownErr63(e)
+          })
+      }
+      importRepo(data, opts) {
+        return this._service.xrpc
+          .call('com.atproto.temp.importRepo', opts?.qp, data, opts)
+          .catch((e) => {
             throw toKnownErr64(e)
+          })
+      }
+      pushBlob(data, opts) {
+        return this._service.xrpc
+          .call('com.atproto.temp.pushBlob', opts?.qp, data, opts)
+          .catch((e) => {
+            throw toKnownErr65(e)
+          })
+      }
+      transferAccount(data, opts) {
+        return this._service.xrpc
+          .call('com.atproto.temp.transferAccount', opts?.qp, data, opts)
+          .catch((e) => {
+            throw toKnownErr66(e)
           })
       }
     }
@@ -30135,49 +30594,49 @@ if (cid) {
         return this._service.xrpc
           .call('app.bsky.actor.getPreferences', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr65(e)
+            throw toKnownErr67(e)
           })
       }
       getProfile(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.actor.getProfile', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr66(e)
+            throw toKnownErr68(e)
           })
       }
       getProfiles(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.actor.getProfiles', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr67(e)
+            throw toKnownErr69(e)
           })
       }
       getSuggestions(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.actor.getSuggestions', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr68(e)
+            throw toKnownErr70(e)
           })
       }
       putPreferences(data, opts) {
         return this._service.xrpc
           .call('app.bsky.actor.putPreferences', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr69(e)
+            throw toKnownErr71(e)
           })
       }
       searchActors(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.actor.searchActors', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr70(e)
+            throw toKnownErr72(e)
           })
       }
       searchActorsTypeahead(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.actor.searchActorsTypeahead', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr71(e)
+            throw toKnownErr73(e)
           })
       }
     }
@@ -30247,112 +30706,112 @@ if (cid) {
         return this._service.xrpc
           .call('app.bsky.feed.describeFeedGenerator', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr72(e)
+            throw toKnownErr74(e)
           })
       }
       getActorFeeds(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getActorFeeds', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr73(e)
+            throw toKnownErr75(e)
           })
       }
       getActorLikes(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getActorLikes', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr74(e)
+            throw toKnownErr76(e)
           })
       }
       getAuthorFeed(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getAuthorFeed', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr75(e)
+            throw toKnownErr77(e)
           })
       }
       getFeed(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getFeed', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr76(e)
+            throw toKnownErr78(e)
           })
       }
       getFeedGenerator(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getFeedGenerator', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr77(e)
+            throw toKnownErr79(e)
           })
       }
       getFeedGenerators(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getFeedGenerators', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr78(e)
+            throw toKnownErr80(e)
           })
       }
       getFeedSkeleton(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getFeedSkeleton', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr79(e)
+            throw toKnownErr81(e)
           })
       }
       getLikes(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getLikes', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr80(e)
+            throw toKnownErr82(e)
           })
       }
       getListFeed(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getListFeed', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr81(e)
+            throw toKnownErr83(e)
           })
       }
       getPostThread(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getPostThread', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr82(e)
+            throw toKnownErr84(e)
           })
       }
       getPosts(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getPosts', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr83(e)
+            throw toKnownErr85(e)
           })
       }
       getRepostedBy(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getRepostedBy', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr84(e)
+            throw toKnownErr86(e)
           })
       }
       getSuggestedFeeds(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getSuggestedFeeds', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr85(e)
+            throw toKnownErr87(e)
           })
       }
       getTimeline(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.getTimeline', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr86(e)
+            throw toKnownErr88(e)
           })
       }
       searchPosts(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.feed.searchPosts', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr87(e)
+            throw toKnownErr89(e)
           })
       }
     }
@@ -30584,56 +31043,56 @@ if (cid) {
         return this._service.xrpc
           .call('app.bsky.graph.getBlocks', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr88(e)
+            throw toKnownErr90(e)
           })
       }
       getFollowers(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.getFollowers', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr89(e)
+            throw toKnownErr91(e)
           })
       }
       getFollows(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.getFollows', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr90(e)
+            throw toKnownErr92(e)
           })
       }
       getList(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.getList', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr91(e)
+            throw toKnownErr93(e)
           })
       }
       getListBlocks(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.getListBlocks', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr92(e)
+            throw toKnownErr94(e)
           })
       }
       getListMutes(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.getListMutes', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr93(e)
+            throw toKnownErr95(e)
           })
       }
       getLists(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.getLists', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr94(e)
+            throw toKnownErr96(e)
           })
       }
       getMutes(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.getMutes', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr95(e)
+            throw toKnownErr97(e)
           })
       }
       getSuggestedFollowsByActor(params2, opts) {
@@ -30645,35 +31104,35 @@ if (cid) {
             opts
           )
           .catch((e) => {
-            throw toKnownErr96(e)
+            throw toKnownErr98(e)
           })
       }
       muteActor(data, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.muteActor', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr97(e)
+            throw toKnownErr99(e)
           })
       }
       muteActorList(data, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.muteActorList', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr98(e)
+            throw toKnownErr100(e)
           })
       }
       unmuteActor(data, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.unmuteActor', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr99(e)
+            throw toKnownErr101(e)
           })
       }
       unmuteActorList(data, opts) {
         return this._service.xrpc
           .call('app.bsky.graph.unmuteActorList', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr100(e)
+            throw toKnownErr102(e)
           })
       }
     }
@@ -30900,7 +31359,7 @@ if (cid) {
         return this._service.xrpc
           .call('app.bsky.notification.getUnreadCount', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr101(e)
+            throw toKnownErr103(e)
           })
       }
       listNotifications(params2, opts) {
@@ -30912,21 +31371,21 @@ if (cid) {
             opts
           )
           .catch((e) => {
-            throw toKnownErr102(e)
+            throw toKnownErr104(e)
           })
       }
       registerPush(data, opts) {
         return this._service.xrpc
           .call('app.bsky.notification.registerPush', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr103(e)
+            throw toKnownErr105(e)
           })
       }
       updateSeen(data, opts) {
         return this._service.xrpc
           .call('app.bsky.notification.updateSeen', opts?.qp, data, opts)
           .catch((e) => {
-            throw toKnownErr104(e)
+            throw toKnownErr106(e)
           })
       }
     }
@@ -30943,7 +31402,7 @@ if (cid) {
         return this._service.xrpc
           .call('app.bsky.unspecced.getPopular', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr105(e)
+            throw toKnownErr107(e)
           })
       }
       getPopularFeedGenerators(params2, opts) {
@@ -30955,14 +31414,14 @@ if (cid) {
             opts
           )
           .catch((e) => {
-            throw toKnownErr106(e)
+            throw toKnownErr108(e)
           })
       }
       getTimelineSkeleton(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.unspecced.getTimelineSkeleton', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr107(e)
+            throw toKnownErr109(e)
           })
       }
       searchActorsSkeleton(params2, opts) {
@@ -30974,14 +31433,14 @@ if (cid) {
             opts
           )
           .catch((e) => {
-            throw toKnownErr108(e)
+            throw toKnownErr110(e)
           })
       }
       searchPostsSkeleton(params2, opts) {
         return this._service.xrpc
           .call('app.bsky.unspecced.searchPostsSkeleton', params2, void 0, opts)
           .catch((e) => {
-            throw toKnownErr109(e)
+            throw toKnownErr111(e)
           })
       }
     }
@@ -32796,7 +33255,7 @@ if (cid) {
           }
           const start = text.utf16.indexOf(match[2], match.index)
           const index = { start, end: start + match[2].length }
-          if (/[.,;!?]$/.test(uri2)) {
+          if (/[.,;:!?]$/.test(uri2)) {
             uri2 = uri2.slice(0, -1)
             index.end--
           }
@@ -33201,6 +33660,37 @@ if (cid) {
               name: 'Content Warning',
               description:
                 'This content has received a general warning from moderators.'
+            }
+          }
+        }
+      },
+      '!no-unauthenticated': {
+        id: '!no-unauthenticated',
+        preferences: ['hide'],
+        flags: ['no-override', 'unauthed'],
+        onwarn: 'blur',
+        groupId: 'system',
+        configurable: false,
+        strings: {
+          settings: {
+            en: {
+              name: 'Sign-in Required',
+              description:
+                'This user has requested that their account only be shown to signed-in users.'
+            }
+          },
+          account: {
+            en: {
+              name: 'Sign-in Required',
+              description:
+                'This user has requested that their account only be shown to signed-in users.'
+            }
+          },
+          content: {
+            en: {
+              name: 'Sign-in Required',
+              description:
+                'This user has requested that their content only be shown to signed-in users.'
             }
           }
         }
@@ -34013,6 +34503,9 @@ if (cid) {
         if (labelPref === 'ignore') {
           return
         }
+        if (labelDef.flags.includes('unauthed') && !!opts.userDid) {
+          return
+        }
         let priority
         if (labelDef.flags.includes('no-override')) {
           priority = 1
@@ -34134,7 +34627,9 @@ if (cid) {
         return []
       }
       return labels.filter(
-        (label) => !label.uri.endsWith('/app.bsky.actor.profile/self')
+        (label) =>
+          !label.uri.endsWith('/app.bsky.actor.profile/self') ||
+          label.val === '!no-unauthenticated'
       )
     }
 
@@ -34504,7 +34999,12 @@ if (cid) {
       system: {
         id: 'system',
         configurable: false,
-        labels: [LABELS['!hide'], LABELS['!no-promote'], LABELS['!warn']],
+        labels: [
+          LABELS['!hide'],
+          LABELS['!no-promote'],
+          LABELS['!warn'],
+          LABELS['!no-unauthenticated']
+        ],
         strings: {
           settings: {
             en: {
