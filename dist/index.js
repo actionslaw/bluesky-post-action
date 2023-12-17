@@ -4,15 +4,6 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor
 var __getOwnPropNames = Object.getOwnPropertyNames
 var __getProtoOf = Object.getPrototypeOf
 var __hasOwnProp = Object.prototype.hasOwnProperty
-var __defNormalProp = (obj, key, value) =>
-  key in obj
-    ? __defProp(obj, key, {
-        enumerable: true,
-        configurable: true,
-        writable: true,
-        value
-      })
-    : (obj[key] = value)
 var __esm = (fn, res) =>
   function __init() {
     return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])((fn = 0))), res
@@ -55,10 +46,6 @@ var __toESM = (mod, isNodeMode, target) => (
 )
 var __toCommonJS = (mod) =>
   __copyProps(__defProp({}, '__esModule', { value: true }), mod)
-var __publicField = (obj, key, value) => {
-  __defNormalProp(obj, typeof key !== 'symbol' ? key + '' : key, value)
-  return value
-}
 var __accessCheck = (obj, member, msg) => {
   if (!member.has(obj)) throw TypeError('Cannot ' + msg)
 }
@@ -3920,39 +3907,34 @@ var require_constants = __commonJS({
       ''
     ]
     var subresourceSet = new Set(subresource)
-    var _a4
     var DOMException3 =
-      (_a4 = globalThis.DOMException) != null
-        ? _a4
-        : (() => {
-            try {
-              atob('~')
-            } catch (err) {
-              return Object.getPrototypeOf(err).constructor
-            }
-          })()
+      globalThis.DOMException ??
+      (() => {
+        try {
+          atob('~')
+        } catch (err) {
+          return Object.getPrototypeOf(err).constructor
+        }
+      })()
     var channel
-    var _a5
     var structuredClone =
-      (_a5 = globalThis.structuredClone) != null
-        ? _a5
-        : // https://github.com/nodejs/node/blob/b27ae24dcc4251bad726d9d84baf678d1f707fed/lib/internal/structured_clone.js
-          // structuredClone was added in v17.0.0, but fetch supports v16.8
-          function structuredClone2(value, options = void 0) {
-            if (arguments.length === 0) {
-              throw new TypeError('missing argument')
-            }
-            if (!channel) {
-              channel = new MessageChannel()
-            }
-            channel.port1.unref()
-            channel.port2.unref()
-            channel.port1.postMessage(
-              value,
-              options == null ? void 0 : options.transfer
-            )
-            return receiveMessageOnPort(channel.port2).message
-          }
+      globalThis.structuredClone ?? // https://github.com/nodejs/node/blob/b27ae24dcc4251bad726d9d84baf678d1f707fed/lib/internal/structured_clone.js
+      // structuredClone was added in v17.0.0, but fetch supports v16.8
+      function structuredClone2(value, options = void 0) {
+        if (arguments.length === 0) {
+          throw new TypeError('missing argument')
+        }
+        if (!channel) {
+          channel = new MessageChannel()
+        }
+        channel.port1.unref()
+        channel.port2.unref()
+        channel.port1.postMessage(
+          value,
+          options == null ? void 0 : options.transfer
+        )
+        return receiveMessageOnPort(channel.port2).message
+      }
     module2.exports = {
       DOMException: DOMException3,
       structuredClone,
@@ -4152,11 +4134,8 @@ var require_util2 = __commonJS({
       return true
     }
     function setRequestReferrerPolicyOnRedirect(request, actualResponse) {
-      var _a4
       const { headersList } = actualResponse
-      const policyHeader = (
-        (_a4 = headersList.get('referrer-policy')) != null ? _a4 : ''
-      ).split(',')
+      const policyHeader = (headersList.get('referrer-policy') ?? '').split(',')
       let policy = ''
       if (policyHeader.length > 0) {
         for (let i2 = policyHeader.length; i2 !== 0; i2--) {
@@ -4223,12 +4202,11 @@ var require_util2 = __commonJS({
       return performance2.now()
     }
     function createOpaqueTimingInfo(timingInfo) {
-      var _a4, _b
       return {
-        startTime: (_a4 = timingInfo.startTime) != null ? _a4 : 0,
+        startTime: timingInfo.startTime ?? 0,
         redirectStartTime: 0,
         redirectEndTime: 0,
-        postRedirectStartTime: (_b = timingInfo.startTime) != null ? _b : 0,
+        postRedirectStartTime: timingInfo.startTime ?? 0,
         finalServiceWorkerStartTime: 0,
         finalNetworkResponseStartTime: 0,
         finalNetworkRequestStartTime: 0,
@@ -4912,7 +4890,7 @@ var require_webidl = __commonJS({
           let value = dictionary[key]
           const hasDefault = hasOwn(options, 'defaultValue')
           if (hasDefault && value !== null) {
-            value = value != null ? value : defaultValue
+            value = value ?? defaultValue
           }
           if (required || hasDefault || value !== void 0) {
             value = converter(value)
@@ -5413,10 +5391,9 @@ var require_file = __commonJS({
     }
     var FileLike = class _FileLike {
       constructor(blobLike, fileName, options = {}) {
-        var _a4
         const n = fileName
         const t2 = options.type
-        const d = (_a4 = options.lastModified) != null ? _a4 : Date.now()
+        const d = options.lastModified ?? Date.now()
         this[kState] = {
           blobLike,
           name: n,
@@ -5569,7 +5546,7 @@ var require_formdata = __commonJS({
     var { File: UndiciFile, FileLike, isFileLike } = require_file()
     var { webidl } = require_webidl()
     var { Blob: Blob3, File: NativeFile } = require('buffer')
-    var File2 = NativeFile != null ? NativeFile : UndiciFile
+    var File2 = NativeFile ?? UndiciFile
     var FormData2 = class _FormData {
       constructor(form) {
         if (form !== void 0) {
@@ -5760,7 +5737,7 @@ var require_body = __commonJS({
     var { File: UndiciFile } = require_file()
     var { parseMIMEType, serializeAMimeType } = require_dataURL()
     var ReadableStream2 = globalThis.ReadableStream
-    var File2 = NativeFile != null ? NativeFile : UndiciFile
+    var File2 = NativeFile ?? UndiciFile
     var textEncoder = new TextEncoder()
     var textDecoder = new TextDecoder()
     function extractBody(object, keepalive = false) {
@@ -12899,9 +12876,9 @@ var require_headers = __commonJS({
       }
     }
     var HeadersList = class _HeadersList {
+      /** @type {[string, string][]|null} */
+      cookies = null
       constructor(init) {
-        /** @type {[string, string][]|null} */
-        __publicField(this, 'cookies', null)
         if (init instanceof _HeadersList) {
           this[kHeadersMap] = new Map(init[kHeadersMap])
           this[kHeadersSortedMap] = init[kHeadersSortedMap]
@@ -12923,7 +12900,6 @@ var require_headers = __commonJS({
       }
       // https://fetch.spec.whatwg.org/#concept-header-list-append
       append(name, value) {
-        var _a4
         this[kHeadersSortedMap] = null
         const lowercaseName = name.toLowerCase()
         const exists = this[kHeadersMap].get(lowercaseName)
@@ -12937,7 +12913,7 @@ var require_headers = __commonJS({
           this[kHeadersMap].set(lowercaseName, { name, value })
         }
         if (lowercaseName === 'set-cookie') {
-          ;(_a4 = this.cookies) != null ? _a4 : (this.cookies = [])
+          this.cookies ?? (this.cookies = [])
           this.cookies.push(value)
         }
       }
@@ -12961,16 +12937,15 @@ var require_headers = __commonJS({
       }
       // https://fetch.spec.whatwg.org/#concept-header-list-get
       get(name) {
-        var _a4, _b
+        var _a4
         if (!this.contains(name)) {
           return null
         }
-        return (_b =
-          (_a4 = this[kHeadersMap].get(name.toLowerCase())) == null
+        return (
+          ((_a4 = this[kHeadersMap].get(name.toLowerCase())) == null
             ? void 0
-            : _a4.value) != null
-          ? _b
-          : null
+            : _a4.value) ?? null
+        )
       }
       *[Symbol.iterator]() {
         for (const [name, { value }] of this[kHeadersMap]) {
@@ -13340,10 +13315,9 @@ var require_response = __commonJS({
       }
       // Returns response’s URL, if it has one; otherwise the empty string.
       get url() {
-        var _a4
         webidl.brandCheck(this, _Response)
         const urlList = this[kState].urlList
-        const url = (_a4 = urlList[urlList.length - 1]) != null ? _a4 : null
+        const url = urlList[urlList.length - 1] ?? null
         if (url === null) {
           return ''
         }
@@ -13960,7 +13934,7 @@ var require_request2 = __commonJS({
             this[kHeaders].append('content-type', contentType)
           }
         }
-        const inputOrInitBody = initBody != null ? initBody : inputBody
+        const inputOrInitBody = initBody ?? inputBody
         if (inputOrInitBody != null && inputOrInitBody.source == null) {
           if (initBody != null && init.duplex == null) {
             throw new TypeError(
@@ -14408,7 +14382,7 @@ var require_fetch = __commonJS({
       }
     }
     function fetch3(input, init = {}) {
-      var _a4, _b
+      var _a4
       webidl.argumentLengthCheck(arguments, 1, { header: 'globalThis.fetch' })
       const p = createDeferredPromise()
       let requestObject
@@ -14477,7 +14451,7 @@ var require_fetch = __commonJS({
         request,
         processResponseEndOfBody: handleFetchDone,
         processResponse,
-        dispatcher: (_b = init.dispatcher) != null ? _b : getGlobalDispatcher()
+        dispatcher: init.dispatcher ?? getGlobalDispatcher()
         // undici
       })
       return p.promise
@@ -14755,7 +14729,6 @@ var require_fetch = __commonJS({
       }
     }
     function schemeFetch(fetchParams) {
-      var _a4
       if (isCancelled(fetchParams) && fetchParams.request.redirectCount === 0) {
         return Promise.resolve(makeAppropriateNetworkError(fetchParams))
       }
@@ -14786,7 +14759,7 @@ var require_fetch = __commonJS({
           const bodyWithType = safelyExtractBody(blobURLEntryObject)
           const body = bodyWithType[0]
           const length = isomorphicEncode(`${body.length}`)
-          const type = (_a4 = bodyWithType[1]) != null ? _a4 : ''
+          const type = bodyWithType[1] ?? ''
           const response = makeResponse({
             statusText: 'OK',
             headersList: [
@@ -15196,12 +15169,11 @@ var require_fetch = __commonJS({
               ? void 0
               : _a4.call(
                   this,
-                  err != null
-                    ? err
-                    : new DOMException3(
-                        'The operation was aborted.',
-                        'AbortError'
-                      )
+                  err ??
+                    new DOMException3(
+                      'The operation was aborted.',
+                      'AbortError'
+                    )
                 )
           }
         }
@@ -15308,7 +15280,6 @@ var require_fetch = __commonJS({
       response.body = { stream }
       fetchParams.controller.on('terminated', onAborted)
       fetchParams.controller.resume = async () => {
-        var _a4
         while (true) {
           let bytes
           let isFailure
@@ -15332,7 +15303,7 @@ var require_fetch = __commonJS({
             return
           }
           timingInfo.decodedBodySize +=
-            (_a4 = bytes == null ? void 0 : bytes.byteLength) != null ? _a4 : 0
+            (bytes == null ? void 0 : bytes.byteLength) ?? 0
           if (isFailure) {
             fetchParams.controller.terminate(bytes)
             return
@@ -15563,9 +15534,7 @@ var require_progressevent = __commonJS({
     var ProgressEvent = class _ProgressEvent extends Event {
       constructor(type, eventInitDict = {}) {
         type = webidl.converters.DOMString(type)
-        eventInitDict = webidl.converters.ProgressEventInit(
-          eventInitDict != null ? eventInitDict : {}
-        )
+        eventInitDict = webidl.converters.ProgressEventInit(eventInitDict ?? {})
         super(type, eventInitDict)
         this[kState] = {
           lengthComputable: eventInitDict.lengthComputable,
@@ -16472,7 +16441,7 @@ var require_cache = __commonJS({
         return p[0]
       }
       async matchAll(request = void 0, options = {}) {
-        var _a4, _b
+        var _a4
         webidl.brandCheck(this, _Cache)
         if (request !== void 0) request = webidl.converters.RequestInfo(request)
         options = webidl.converters.CacheQueryOptions(options)
@@ -16508,9 +16477,7 @@ var require_cache = __commonJS({
         const responseList = []
         for (const response of responses) {
           const responseObject = new Response2(
-            (_b = (_a4 = response.body) == null ? void 0 : _a4.source) != null
-              ? _b
-              : null
+            ((_a4 = response.body) == null ? void 0 : _a4.source) ?? null
           )
           const body = responseObject[kState].body
           responseObject[kState] = response
@@ -16941,9 +16908,7 @@ var require_cache = __commonJS({
     queryCache_fn = function (requestQuery, options, targetStorage) {
       const resultList = []
       const storage =
-        targetStorage != null
-          ? targetStorage
-          : __privateGet(this, _relevantRequestResponseList)
+        targetStorage ?? __privateGet(this, _relevantRequestResponseList)
       for (const requestResponse of storage) {
         const [cachedRequest, cachedResponse] = requestResponse
         if (
@@ -17405,7 +17370,6 @@ var require_parse = __commonJS({
       unparsedAttributes,
       cookieAttributeList = {}
     ) {
-      var _a4
       if (unparsedAttributes.length === 0) {
         return cookieAttributeList
       }
@@ -17492,9 +17456,7 @@ var require_parse = __commonJS({
         }
         cookieAttributeList.sameSite = enforcement
       } else {
-        ;(_a4 = cookieAttributeList.unparsed) != null
-          ? _a4
-          : (cookieAttributeList.unparsed = [])
+        cookieAttributeList.unparsed ?? (cookieAttributeList.unparsed = [])
         cookieAttributeList.unparsed.push(`${attributeName}=${attributeValue}`)
       }
       return parseUnparsedAttributes(unparsedAttributes, cookieAttributeList)
@@ -17802,9 +17764,7 @@ var require_events = __commonJS({
         super(type, eventInitDict)
         __privateAdd(this, _eventInit3, void 0)
         type = webidl.converters.DOMString(type)
-        eventInitDict = webidl.converters.ErrorEventInit(
-          eventInitDict != null ? eventInitDict : {}
-        )
+        eventInitDict = webidl.converters.ErrorEventInit(eventInitDict ?? {})
         __privateSet(this, _eventInit3, eventInitDict)
       }
       get message() {
@@ -18117,7 +18077,6 @@ var require_connection = __commonJS({
       onEstablish,
       options
     ) {
-      var _a4
       const requestURL = url
       requestURL.protocol = url.protocol === 'ws:' ? 'http:' : 'https:'
       const request = makeRequest({
@@ -18143,10 +18102,9 @@ var require_connection = __commonJS({
       const controller = fetching({
         request,
         useParallelQueue: true,
-        dispatcher:
-          (_a4 = options.dispatcher) != null ? _a4 : getGlobalDispatcher(),
+        dispatcher: options.dispatcher ?? getGlobalDispatcher(),
         processResponse(response) {
-          var _a5, _b
+          var _a4, _b
           if (response.type === 'error' || response.status !== 101) {
             failWebsocketConnection(
               ws,
@@ -18165,9 +18123,9 @@ var require_connection = __commonJS({
             return
           }
           if (
-            ((_a5 = response.headersList.get('Upgrade')) == null
+            ((_a4 = response.headersList.get('Upgrade')) == null
               ? void 0
-              : _a5.toLowerCase()) !== 'websocket'
+              : _a4.toLowerCase()) !== 'websocket'
           ) {
             failWebsocketConnection(
               ws,
@@ -18240,14 +18198,13 @@ var require_connection = __commonJS({
       }
     }
     function onSocketClose() {
-      var _a4
       const { ws } = this
       const wasClean = ws[kSentClose] && ws[kReceivedClose]
       let code = 1005
       let reason = ''
       const result = ws[kByteParser].closingInfo
       if (result) {
-        code = (_a4 = result.code) != null ? _a4 : 1005
+        code = result.code ?? 1005
         reason = result.reason
       } else if (!ws[kSentClose]) {
         code = 1006
@@ -18298,12 +18255,9 @@ var require_frame = __commonJS({
         this.maskKey = crypto5.randomBytes(4)
       }
       createFrame(opcode) {
-        var _a4, _b
+        var _a4
         const bodyLength =
-          (_b = (_a4 = this.frameData) == null ? void 0 : _a4.byteLength) !=
-          null
-            ? _b
-            : 0
+          ((_a4 = this.frameData) == null ? void 0 : _a4.byteLength) ?? 0
         let payloadLength = bodyLength
         let offset = 6
         if (bodyLength > maxUnsigned16Bit) {
@@ -18389,7 +18343,7 @@ var require_receiver = __commonJS({
        * or not enough bytes are buffered to parse.
        */
       run(callback) {
-        var _a4, _b
+        var _a4
         while (true) {
           if (__privateGet(this, _state) === parserStates.INFO) {
             if (__privateGet(this, _byteOffset) < 2) {
@@ -18398,9 +18352,8 @@ var require_receiver = __commonJS({
             const buffer = this.consume(2)
             __privateGet(this, _info).fin = (buffer[0] & 128) !== 0
             __privateGet(this, _info).opcode = buffer[0] & 15
-            ;(_b = (_a4 = __privateGet(this, _info)).originalOpcode) != null
-              ? _b
-              : (_a4.originalOpcode = __privateGet(this, _info).opcode)
+            ;(_a4 = __privateGet(this, _info)).originalOpcode ??
+              (_a4.originalOpcode = __privateGet(this, _info).opcode)
             __privateGet(this, _info).fragmented =
               !__privateGet(this, _info).fin &&
               __privateGet(this, _info).opcode !== opcodes.CONTINUATION
@@ -42170,15 +42123,12 @@ if (cid) {
         this.ref = ref
         this.mimeType = mimeType
         this.size = size
-        this.original =
-          original != null
-            ? original
-            : {
-                $type: 'blob',
-                ref,
-                mimeType,
-                size
-              }
+        this.original = original ?? {
+          $type: 'blob',
+          ref,
+          mimeType,
+          size
+        }
       }
       static asBlobRef(obj) {
         if (check_exports.is(obj, jsonBlobRef)) {
@@ -42378,7 +42328,7 @@ if (cid) {
         if (result.success) {
           return result
         }
-        error2 != null ? error2 : (error2 = result.error)
+        error2 ?? (error2 = result.error)
       }
       if (concreteDefs.length > 1) {
         return {
@@ -42739,9 +42689,8 @@ if (cid) {
     var InvalidLexiconError = class extends Error {}
     var LexiconDefNotFoundError = class extends Error {}
     function params(lexicons2, path, def2, val) {
-      var _a4
       const value = val && typeof val === 'object' ? val : {}
-      const requiredProps = new Set((_a4 = def2.required) != null ? _a4 : [])
+      const requiredProps = new Set(def2.required ?? [])
       let resultValue = value
       if (typeof def2.properties === 'object') {
         for (const key in def2.properties) {
