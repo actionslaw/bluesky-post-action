@@ -1,8 +1,13 @@
 import * as core from '@actions/core'
+import { NodePolyfillAtpAgentFetchHandler } from './NodePolyfillAtpAgentFetchHandler'
 import { BskyAgent, RichText } from '@atproto/api'
 
 export type CID = string & { readonly '': unique symbol }
 export type URI = string & { readonly '': unique symbol }
+
+BskyAgent.configure({
+  fetch: NodePolyfillAtpAgentFetchHandler
+})
 
 export class Reference {
   readonly cid: CID
