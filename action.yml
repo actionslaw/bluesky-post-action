@@ -2,15 +2,15 @@ name: Bluesky Post Action
 branding:
   color: blue
   icon: at-sign
-description: 'Post to Bluesky Social'
+description: Create and reply to posts on Bluesky
 inputs:
   post:
     description: Post richtext content
     required: true
   service:
-    description: at-proto service
+    description: At Protocol service
     required: false
-    default: 'https://bsky.social'
+    default: https://bsky.social
 runs:
   main: dist/index.js
   using: node20
