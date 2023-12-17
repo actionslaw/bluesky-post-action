@@ -9,15 +9,12 @@ BskyAgent.configure({
   fetch: NodePolyfillAtpAgentFetchHandler
 })
 
-export class Reference {
+export interface Reference {
   readonly cid: CID
   readonly uri: URI
+}
 
-  constructor(cid: CID, uri: URI) {
-    this.cid = cid
-    this.uri = uri
-  }
-
+export class Reference {
   static parse(json: string | undefined): Reference | undefined {
     if (json) return JSON.parse(json) as Reference
   }
