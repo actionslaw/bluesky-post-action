@@ -1,6 +1,6 @@
 {
   "name": "bluesky-post-action",
-  "version": "0.3",
+  "version": "0.4",
   "private": true,
   "description": "A GitHub Action to post to Bluesky Social",
   "keywords": [
