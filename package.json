@@ -1,6 +1,6 @@
 {
   "name": "bluesky-post-action",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Github Action to send posts for the AT Protocol",
   "main": "dist/main.js",
   "scripts": {

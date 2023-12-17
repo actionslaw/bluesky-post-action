@@ -2239,11 +2239,11 @@ var require_decodeText = __commonJS({
         return typeof data === "string" ? data : data.toString();
       }
     };
-    function decodeText(text2, sourceEncoding, destEncoding) {
-      if (text2) {
-        return getDecoder(destEncoding)(text2, sourceEncoding);
+    function decodeText(text, sourceEncoding, destEncoding) {
+      if (text) {
+        return getDecoder(destEncoding)(text, sourceEncoding);
       }
-      return text2;
+      return text;
     }
     module2.exports = decodeText;
   }
@@ -5497,7 +5497,7 @@ var require_body = __commonJS({
         });
       }
       assert(isReadableStreamLike(stream));
-      let action2 = null;
+      let action = null;
       let source = null;
       let length = null;
       let type = null;
@@ -5549,7 +5549,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
           length = null;
         }
         source = object;
-        action2 = async function* () {
+        action = async function* () {
           for (const part of blobParts) {
             if (part.stream) {
               yield* part.stream();
@@ -5579,11 +5579,11 @@ Content-Type: ${value.type || "application/octet-stream"}\r
       if (typeof source === "string" || util.isBuffer(source)) {
         length = Buffer.byteLength(source);
       }
-      if (action2 != null) {
+      if (action != null) {
         let iterator;
         stream = new ReadableStream2({
           async start() {
-            iterator = action2(object)[Symbol.asyncIterator]();
+            iterator = action(object)[Symbol.asyncIterator]();
           },
           async pull(controller) {
             const { value, done } = await iterator.next();
@@ -5731,16 +5731,16 @@ Content-Type: ${value.type || "application/octet-stream"}\r
           } else if (/application\/x-www-form-urlencoded/.test(contentType)) {
             let entries;
             try {
-              let text2 = "";
+              let text = "";
               const streamingDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
               for await (const chunk of consumeBody2(this[kState].body)) {
                 if (!isUint8Array(chunk)) {
                   throw new TypeError("Expected Uint8Array chunk");
                 }
-                text2 += streamingDecoder.decode(chunk, { stream: true });
+                text += streamingDecoder.decode(chunk, { stream: true });
               }
-              text2 += streamingDecoder.decode();
-              entries = new URLSearchParams(text2);
+              text += streamingDecoder.decode();
+              entries = new URLSearchParams(text);
             } catch (err) {
               throw Object.assign(new TypeError(), { cause: err });
             }
@@ -11304,15 +11304,15 @@ var require_proxy_agent = __commonJS({
         this[kProxyTls] = opts.proxyTls;
         this[kProxyHeaders] = opts.headers || {};
         const resolvedUrl = new URL3(opts.uri);
-        const { origin, port, host, username, password: password2 } = resolvedUrl;
+        const { origin, port, host, username, password } = resolvedUrl;
         if (opts.auth && opts.token) {
           throw new InvalidArgumentError("opts.auth cannot be used in combination with opts.token");
         } else if (opts.auth) {
           this[kProxyHeaders]["proxy-authorization"] = `Basic ${opts.auth}`;
         } else if (opts.token) {
           this[kProxyHeaders]["proxy-authorization"] = opts.token;
-        } else if (username && password2) {
-          this[kProxyHeaders]["proxy-authorization"] = `Basic ${Buffer.from(`${decodeURIComponent(username)}:${decodeURIComponent(password2)}`).toString("base64")}`;
+        } else if (username && password) {
+          this[kProxyHeaders]["proxy-authorization"] = `Basic ${Buffer.from(`${decodeURIComponent(username)}:${decodeURIComponent(password)}`).toString("base64")}`;
         }
         const connect = buildConnector({ ...opts.proxyTls });
         this[kConnectEndpoint] = buildConnector({ ...opts.requestTls });
@@ -17585,7 +17585,7 @@ var require_lib = __commonJS({
       __setModuleDefault2(result, mod);
       return result;
     };
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    var __awaiter2 = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
         return value instanceof P ? value : new P(function(resolve) {
           resolve(value);
@@ -17692,8 +17692,8 @@ var require_lib = __commonJS({
         this.message = message;
       }
       readBody() {
-        return __awaiter(this, void 0, void 0, function* () {
-          return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
+          return new Promise((resolve) => __awaiter2(this, void 0, void 0, function* () {
             let output = Buffer.alloc(0);
             this.message.on("data", (chunk) => {
               output = Buffer.concat([output, chunk]);
@@ -17705,8 +17705,8 @@ var require_lib = __commonJS({
         });
       }
       readBodyBuffer() {
-        return __awaiter(this, void 0, void 0, function* () {
-          return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
+          return new Promise((resolve) => __awaiter2(this, void 0, void 0, function* () {
             const chunks = [];
             this.message.on("data", (chunk) => {
               chunks.push(chunk);
@@ -17763,42 +17763,42 @@ var require_lib = __commonJS({
         }
       }
       options(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request("OPTIONS", requestUrl, null, additionalHeaders || {});
         });
       }
       get(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request("GET", requestUrl, null, additionalHeaders || {});
         });
       }
       del(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request("DELETE", requestUrl, null, additionalHeaders || {});
         });
       }
       post(requestUrl, data, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request("POST", requestUrl, data, additionalHeaders || {});
         });
       }
       patch(requestUrl, data, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request("PATCH", requestUrl, data, additionalHeaders || {});
         });
       }
       put(requestUrl, data, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request("PUT", requestUrl, data, additionalHeaders || {});
         });
       }
       head(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request("HEAD", requestUrl, null, additionalHeaders || {});
         });
       }
       sendStream(verb, requestUrl, stream, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.request(verb, requestUrl, stream, additionalHeaders);
         });
       }
@@ -17807,14 +17807,14 @@ var require_lib = __commonJS({
        * Be aware that not found returns a null.  Other errors (4xx, 5xx) reject the promise
        */
       getJson(requestUrl, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
           const res = yield this.get(requestUrl, additionalHeaders);
           return this._processResponse(res, this.requestOptions);
         });
       }
       postJson(requestUrl, obj, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           const data = JSON.stringify(obj, null, 2);
           additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
           additionalHeaders[Headers2.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.ContentType, MediaTypes.ApplicationJson);
@@ -17823,7 +17823,7 @@ var require_lib = __commonJS({
         });
       }
       putJson(requestUrl, obj, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           const data = JSON.stringify(obj, null, 2);
           additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
           additionalHeaders[Headers2.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.ContentType, MediaTypes.ApplicationJson);
@@ -17832,7 +17832,7 @@ var require_lib = __commonJS({
         });
       }
       patchJson(requestUrl, obj, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           const data = JSON.stringify(obj, null, 2);
           additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
           additionalHeaders[Headers2.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.ContentType, MediaTypes.ApplicationJson);
@@ -17846,7 +17846,7 @@ var require_lib = __commonJS({
        * Prefer get, del, post and patch
        */
       request(verb, requestUrl, data, headers) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           if (this._disposed) {
             throw new Error("Client has already been disposed.");
           }
@@ -17920,7 +17920,7 @@ var require_lib = __commonJS({
        * @param data
        */
       requestRaw(info, data) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return new Promise((resolve, reject) => {
             function callbackForResult(err, res) {
               if (err) {
@@ -18110,15 +18110,15 @@ var require_lib = __commonJS({
         return proxyAgent;
       }
       _performExponentialBackoff(retryNumber) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           retryNumber = Math.min(ExponentialBackoffCeiling, retryNumber);
           const ms = ExponentialBackoffTimeSlice * Math.pow(2, retryNumber);
           return new Promise((resolve) => setTimeout(() => resolve(), ms));
         });
       }
       _processResponse(res, options) {
-        return __awaiter(this, void 0, void 0, function* () {
-          return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
+          return new Promise((resolve, reject) => __awaiter2(this, void 0, void 0, function* () {
             const statusCode = res.message.statusCode || 0;
             const response = {
               statusCode,
@@ -18180,7 +18180,7 @@ var require_lib = __commonJS({
 var require_auth = __commonJS({
   "node_modules/@actions/http-client/lib/auth.js"(exports2) {
     "use strict";
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    var __awaiter2 = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
         return value instanceof P ? value : new P(function(resolve) {
           resolve(value);
@@ -18210,9 +18210,9 @@ var require_auth = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.PersonalAccessTokenCredentialHandler = exports2.BearerCredentialHandler = exports2.BasicCredentialHandler = void 0;
     var BasicCredentialHandler = class {
-      constructor(username, password2) {
+      constructor(username, password) {
         this.username = username;
-        this.password = password2;
+        this.password = password;
       }
       prepareRequest(options) {
         if (!options.headers) {
@@ -18225,7 +18225,7 @@ var require_auth = __commonJS({
         return false;
       }
       handleAuthentication() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           throw new Error("not implemented");
         });
       }
@@ -18248,7 +18248,7 @@ var require_auth = __commonJS({
         return false;
       }
       handleAuthentication() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           throw new Error("not implemented");
         });
       }
@@ -18271,7 +18271,7 @@ var require_auth = __commonJS({
         return false;
       }
       handleAuthentication() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           throw new Error("not implemented");
         });
       }
@@ -18284,7 +18284,7 @@ var require_auth = __commonJS({
 var require_oidc_utils = __commonJS({
   "node_modules/@actions/core/lib/oidc-utils.js"(exports2) {
     "use strict";
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    var __awaiter2 = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
         return value instanceof P ? value : new P(function(resolve) {
           resolve(value);
@@ -18340,7 +18340,7 @@ var require_oidc_utils = __commonJS({
       }
       static getCall(id_token_url) {
         var _a4;
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           const httpclient = _OidcClient.createHttpClient();
           const res = yield httpclient.getJson(id_token_url).catch((error) => {
             throw new Error(`Failed to get ID Token. 
@@ -18357,7 +18357,7 @@ var require_oidc_utils = __commonJS({
         });
       }
       static getIDToken(audience) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           try {
             let id_token_url = _OidcClient.getIDTokenUrl();
             if (audience) {
@@ -18382,7 +18382,7 @@ var require_oidc_utils = __commonJS({
 var require_summary = __commonJS({
   "node_modules/@actions/core/lib/summary.js"(exports2) {
     "use strict";
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    var __awaiter2 = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
         return value instanceof P ? value : new P(function(resolve) {
           resolve(value);
@@ -18427,7 +18427,7 @@ var require_summary = __commonJS({
        * @returns step summary file path
        */
       filePath() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           if (this._filePath) {
             return this._filePath;
           }
@@ -18468,7 +18468,7 @@ var require_summary = __commonJS({
        * @returns {Promise<Summary>} summary instance
        */
       write(options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           const overwrite = !!(options === null || options === void 0 ? void 0 : options.overwrite);
           const filePath = yield this.filePath();
           const writeFunc = overwrite ? writeFile : appendFile;
@@ -18482,7 +18482,7 @@ var require_summary = __commonJS({
        * @returns {Summary} summary instance
        */
       clear() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter2(this, void 0, void 0, function* () {
           return this.emptyBuffer().write({ overwrite: true });
         });
       }
@@ -18519,8 +18519,8 @@ var require_summary = __commonJS({
        *
        * @returns {Summary} summary instance
        */
-      addRaw(text2, addEOL = false) {
-        this._buffer += text2;
+      addRaw(text, addEOL = false) {
+        this._buffer += text;
         return addEOL ? this.addEOL() : this;
       }
       /**
@@ -18616,10 +18616,10 @@ var require_summary = __commonJS({
        *
        * @returns {Summary} summary instance
        */
-      addHeading(text2, level) {
+      addHeading(text, level) {
         const tag = `h${level}`;
         const allowedTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tag) ? tag : "h1";
-        const element = this.wrap(allowedTag, text2);
+        const element = this.wrap(allowedTag, text);
         return this.addRaw(element).addEOL();
       }
       /**
@@ -18648,9 +18648,9 @@ var require_summary = __commonJS({
        *
        * @returns {Summary} summary instance
        */
-      addQuote(text2, cite) {
+      addQuote(text, cite) {
         const attrs = Object.assign({}, cite && { cite });
-        const element = this.wrap("blockquote", text2, attrs);
+        const element = this.wrap("blockquote", text, attrs);
         return this.addRaw(element).addEOL();
       }
       /**
@@ -18661,8 +18661,8 @@ var require_summary = __commonJS({
        *
        * @returns {Summary} summary instance
        */
-      addLink(text2, href) {
-        const element = this.wrap("a", text2, { href });
+      addLink(text, href) {
+        const element = this.wrap("a", text, { href });
         return this.addRaw(element).addEOL();
       }
     };
@@ -18754,7 +18754,7 @@ var require_core = __commonJS({
       __setModuleDefault2(result, mod);
       return result;
     };
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    var __awaiter2 = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
         return value instanceof P ? value : new P(function(resolve) {
           resolve(value);
@@ -18900,7 +18900,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
     exports2.endGroup = endGroup;
     function group(name, fn) {
-      return __awaiter(this, void 0, void 0, function* () {
+      return __awaiter2(this, void 0, void 0, function* () {
         startGroup(name);
         let result;
         try {
@@ -18925,7 +18925,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
     exports2.getState = getState;
     function getIDToken(aud) {
-      return __awaiter(this, void 0, void 0, function* () {
+      return __awaiter2(this, void 0, void 0, function* () {
         return yield oidc_utils_1.OidcClient.getIDToken(aud);
       });
     }
@@ -21361,7 +21361,7 @@ var require_ponyfill_es2018 = __commonJS({
                   return promiseResolvedWith(void 0);
                 });
               }
-              shutdownWithAction(() => Promise.all(actions.map((action2) => action2())), true, error);
+              shutdownWithAction(() => Promise.all(actions.map((action) => action())), true, error);
             };
             if (signal.aborted) {
               abortAlgorithm();
@@ -21432,21 +21432,21 @@ var require_ponyfill_es2018 = __commonJS({
             const oldCurrentWrite = currentWrite;
             return PerformPromiseThen(currentWrite, () => oldCurrentWrite !== currentWrite ? waitForWritesToFinish() : void 0);
           }
-          function isOrBecomesErrored(stream, promise, action2) {
+          function isOrBecomesErrored(stream, promise, action) {
             if (stream._state === "errored") {
-              action2(stream._storedError);
+              action(stream._storedError);
             } else {
-              uponRejection(promise, action2);
+              uponRejection(promise, action);
             }
           }
-          function isOrBecomesClosed(stream, promise, action2) {
+          function isOrBecomesClosed(stream, promise, action) {
             if (stream._state === "closed") {
-              action2();
+              action();
             } else {
-              uponFulfillment(promise, action2);
+              uponFulfillment(promise, action);
             }
           }
-          function shutdownWithAction(action2, originalIsError, originalError) {
+          function shutdownWithAction(action, originalIsError, originalError) {
             if (shuttingDown) {
               return;
             }
@@ -21457,7 +21457,7 @@ var require_ponyfill_es2018 = __commonJS({
               doTheRest();
             }
             function doTheRest() {
-              uponPromise(action2(), () => finalize(originalIsError, originalError), (newError) => finalize(true, newError));
+              uponPromise(action(), () => finalize(originalIsError, originalError), (newError) => finalize(true, newError));
             }
           }
           function shutdown(isError, error) {
@@ -23865,8 +23865,8 @@ var init_body = __esm({
        * @return  Promise
        */
       async json() {
-        const text2 = await this.text();
-        return JSON.parse(text2);
+        const text = await this.text();
+        return JSON.parse(text);
       }
       /**
        * Decode response as text
@@ -24989,7 +24989,7 @@ var init_src = __esm({
 var require_NodePolyfillAtpAgentFetchHandler = __commonJS({
   "lib/NodePolyfillAtpAgentFetchHandler.js"(exports2) {
     "use strict";
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    var __awaiter2 = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
         return value instanceof P ? value : new P(function(resolve) {
           resolve(value);
@@ -25022,7 +25022,7 @@ var require_NodePolyfillAtpAgentFetchHandler = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.NodePolyfillAtpAgentFetchHandler = void 0;
     var node_fetch_1 = __importDefault((init_src(), __toCommonJS(src_exports)));
-    var NodePolyfillAtpAgentFetchHandler = (httpUri, httpMethod, httpHeaders, httpReqBody) => __awaiter(void 0, void 0, void 0, function* () {
+    var NodePolyfillAtpAgentFetchHandler = (httpUri, httpMethod, httpHeaders, httpReqBody) => __awaiter2(void 0, void 0, void 0, function* () {
       const response = yield (0, node_fetch_1.default)(httpUri, {
         method: httpMethod,
         headers: httpHeaders,
@@ -38276,12 +38276,12 @@ var require_dist = __commonJS({
         this.prefixCodePoint = prefix.codePointAt(0);
         this.baseDecode = baseDecode;
       }
-      decode(text2) {
-        if (typeof text2 === "string") {
-          if (text2.codePointAt(0) !== this.prefixCodePoint) {
-            throw Error(`Unable to decode multibase string ${JSON.stringify(text2)}, ${this.name} decoder only supports inputs prefixed with ${this.prefix}`);
+      decode(text) {
+        if (typeof text === "string") {
+          if (text.codePointAt(0) !== this.prefixCodePoint) {
+            throw Error(`Unable to decode multibase string ${JSON.stringify(text)}, ${this.name} decoder only supports inputs prefixed with ${this.prefix}`);
           }
-          return this.baseDecode(text2.slice(this.prefix.length));
+          return this.baseDecode(text.slice(this.prefix.length));
         } else {
           throw Error("Can only multibase decode strings");
         }
@@ -38334,7 +38334,7 @@ var require_dist = __commonJS({
         prefix,
         name: name2,
         encode: encode5,
-        decode: (text2) => coerce2(decode6(text2))
+        decode: (text) => coerce2(decode6(text))
       });
     };
     var decode4 = (string3, alphabet2, bitsPerChar, name2) => {
@@ -39174,7 +39174,7 @@ if (cid) {
       if (!Array.isArray(services)) {
         services = [services];
       }
-      const found = services.find((service22) => service22.id === opts.id || service22.id === `${did2}${opts.id}`);
+      const found = services.find((service2) => service2.id === opts.id || service2.id === `${did2}${opts.id}`);
       if (!found)
         return void 0;
       if (found.type !== opts.type) {
@@ -39206,7 +39206,7 @@ if (cid) {
       controller: z.string(),
       publicKeyMultibase: z.string().optional()
     });
-    var service2 = z.object({
+    var service = z.object({
       id: z.string(),
       type: z.string(),
       serviceEndpoint: z.union([z.string(), z.record(z.unknown())])
@@ -39215,7 +39215,7 @@ if (cid) {
       id: z.string(),
       alsoKnownAs: z.array(z.string()).optional(),
       verificationMethod: z.array(verificationMethod).optional(),
-      service: z.array(service2).optional()
+      service: z.array(service).optional()
     });
     var import_iso_datestring_validator = __toESM2(require_dist2());
     function datetime(path, value) {
@@ -50979,27 +50979,27 @@ if (cid) {
       }
     };
     var ComNS = class {
-      constructor(service22) {
-        this._service = service22;
-        this.atproto = new AtprotoNS(service22);
+      constructor(service2) {
+        this._service = service2;
+        this.atproto = new AtprotoNS(service2);
       }
     };
     var AtprotoNS = class {
-      constructor(service22) {
-        this._service = service22;
-        this.admin = new AdminNS(service22);
-        this.identity = new IdentityNS(service22);
-        this.label = new LabelNS(service22);
-        this.moderation = new ModerationNS(service22);
-        this.repo = new RepoNS(service22);
-        this.server = new ServerNS(service22);
-        this.sync = new SyncNS(service22);
-        this.temp = new TempNS(service22);
+      constructor(service2) {
+        this._service = service2;
+        this.admin = new AdminNS(service2);
+        this.identity = new IdentityNS(service2);
+        this.label = new LabelNS(service2);
+        this.moderation = new ModerationNS(service2);
+        this.repo = new RepoNS(service2);
+        this.server = new ServerNS(service2);
+        this.sync = new SyncNS(service2);
+        this.temp = new TempNS(service2);
       }
     };
     var AdminNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       deleteAccount(data, opts) {
         return this._service.xrpc.call("com.atproto.admin.deleteAccount", opts == null ? void 0 : opts.qp, data, opts).catch((e2) => {
@@ -51093,8 +51093,8 @@ if (cid) {
       }
     };
     var IdentityNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       resolveHandle(params2, opts) {
         return this._service.xrpc.call("com.atproto.identity.resolveHandle", params2, void 0, opts).catch((e2) => {
@@ -51108,8 +51108,8 @@ if (cid) {
       }
     };
     var LabelNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       queryLabels(params2, opts) {
         return this._service.xrpc.call("com.atproto.label.queryLabels", params2, void 0, opts).catch((e2) => {
@@ -51118,8 +51118,8 @@ if (cid) {
       }
     };
     var ModerationNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       createReport(data, opts) {
         return this._service.xrpc.call("com.atproto.moderation.createReport", opts == null ? void 0 : opts.qp, data, opts).catch((e2) => {
@@ -51128,8 +51128,8 @@ if (cid) {
       }
     };
     var RepoNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       applyWrites(data, opts) {
         return this._service.xrpc.call("com.atproto.repo.applyWrites", opts == null ? void 0 : opts.qp, data, opts).catch((e2) => {
@@ -51173,8 +51173,8 @@ if (cid) {
       }
     };
     var ServerNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       confirmEmail(data, opts) {
         return this._service.xrpc.call("com.atproto.server.confirmEmail", opts == null ? void 0 : opts.qp, data, opts).catch((e2) => {
@@ -51283,8 +51283,8 @@ if (cid) {
       }
     };
     var SyncNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       getBlob(params2, opts) {
         return this._service.xrpc.call("com.atproto.sync.getBlob", params2, void 0, opts).catch((e2) => {
@@ -51343,8 +51343,8 @@ if (cid) {
       }
     };
     var TempNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       fetchLabels(params2, opts) {
         return this._service.xrpc.call("com.atproto.temp.fetchLabels", params2, void 0, opts).catch((e2) => {
@@ -51368,27 +51368,27 @@ if (cid) {
       }
     };
     var AppNS = class {
-      constructor(service22) {
-        this._service = service22;
-        this.bsky = new BskyNS(service22);
+      constructor(service2) {
+        this._service = service2;
+        this.bsky = new BskyNS(service2);
       }
     };
     var BskyNS = class {
-      constructor(service22) {
-        this._service = service22;
-        this.actor = new ActorNS(service22);
-        this.embed = new EmbedNS(service22);
-        this.feed = new FeedNS(service22);
-        this.graph = new GraphNS(service22);
-        this.notification = new NotificationNS(service22);
-        this.richtext = new RichtextNS(service22);
-        this.unspecced = new UnspeccedNS(service22);
+      constructor(service2) {
+        this._service = service2;
+        this.actor = new ActorNS(service2);
+        this.embed = new EmbedNS(service2);
+        this.feed = new FeedNS(service2);
+        this.graph = new GraphNS(service2);
+        this.notification = new NotificationNS(service2);
+        this.richtext = new RichtextNS(service2);
+        this.unspecced = new UnspeccedNS(service2);
       }
     };
     var ActorNS = class {
-      constructor(service22) {
-        this._service = service22;
-        this.profile = new ProfileRecord(service22);
+      constructor(service2) {
+        this._service = service2;
+        this.profile = new ProfileRecord(service2);
       }
       getPreferences(params2, opts) {
         return this._service.xrpc.call("app.bsky.actor.getPreferences", params2, void 0, opts).catch((e2) => {
@@ -51427,8 +51427,8 @@ if (cid) {
       }
     };
     var ProfileRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51454,18 +51454,18 @@ if (cid) {
       }
     };
     var EmbedNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
     };
     var FeedNS = class {
-      constructor(service22) {
-        this._service = service22;
-        this.generator = new GeneratorRecord(service22);
-        this.like = new LikeRecord(service22);
-        this.post = new PostRecord(service22);
-        this.repost = new RepostRecord(service22);
-        this.threadgate = new ThreadgateRecord(service22);
+      constructor(service2) {
+        this._service = service2;
+        this.generator = new GeneratorRecord(service2);
+        this.like = new LikeRecord(service2);
+        this.post = new PostRecord(service2);
+        this.repost = new RepostRecord(service2);
+        this.threadgate = new ThreadgateRecord(service2);
       }
       describeFeedGenerator(params2, opts) {
         return this._service.xrpc.call("app.bsky.feed.describeFeedGenerator", params2, void 0, opts).catch((e2) => {
@@ -51549,8 +51549,8 @@ if (cid) {
       }
     };
     var GeneratorRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51576,8 +51576,8 @@ if (cid) {
       }
     };
     var LikeRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51603,8 +51603,8 @@ if (cid) {
       }
     };
     var PostRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51630,8 +51630,8 @@ if (cid) {
       }
     };
     var RepostRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51657,8 +51657,8 @@ if (cid) {
       }
     };
     var ThreadgateRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51684,13 +51684,13 @@ if (cid) {
       }
     };
     var GraphNS = class {
-      constructor(service22) {
-        this._service = service22;
-        this.block = new BlockRecord(service22);
-        this.follow = new FollowRecord(service22);
-        this.list = new ListRecord(service22);
-        this.listblock = new ListblockRecord(service22);
-        this.listitem = new ListitemRecord(service22);
+      constructor(service2) {
+        this._service = service2;
+        this.block = new BlockRecord(service2);
+        this.follow = new FollowRecord(service2);
+        this.list = new ListRecord(service2);
+        this.listblock = new ListblockRecord(service2);
+        this.listitem = new ListitemRecord(service2);
       }
       getBlocks(params2, opts) {
         return this._service.xrpc.call("app.bsky.graph.getBlocks", params2, void 0, opts).catch((e2) => {
@@ -51759,8 +51759,8 @@ if (cid) {
       }
     };
     var BlockRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51786,8 +51786,8 @@ if (cid) {
       }
     };
     var FollowRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51813,8 +51813,8 @@ if (cid) {
       }
     };
     var ListRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51840,8 +51840,8 @@ if (cid) {
       }
     };
     var ListblockRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51867,8 +51867,8 @@ if (cid) {
       }
     };
     var ListitemRecord = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       async list(params2) {
         const res = await this._service.xrpc.call("com.atproto.repo.listRecords", {
@@ -51894,8 +51894,8 @@ if (cid) {
       }
     };
     var NotificationNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       getUnreadCount(params2, opts) {
         return this._service.xrpc.call("app.bsky.notification.getUnreadCount", params2, void 0, opts).catch((e2) => {
@@ -51919,13 +51919,13 @@ if (cid) {
       }
     };
     var RichtextNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
     };
     var UnspeccedNS = class {
-      constructor(service22) {
-        this._service = service22;
+      constructor(service2) {
+        this._service = service2;
       }
       getPopular(params2, opts) {
         return this._service.xrpc.call("app.bsky.unspecced.getPopular", params2, void 0, opts).catch((e2) => {
@@ -53688,22 +53688,22 @@ if (cid) {
       "\uC0BC\uC131",
       "\uD55C\uAD6D"
     ];
-    function detectFacets(text2) {
+    function detectFacets(text) {
       var _a4;
       let match;
       const facets = [];
       {
         const re = /(^|\s|\()(@)([a-zA-Z0-9.-]+)(\b)/g;
-        while (match = re.exec(text2.utf16)) {
+        while (match = re.exec(text.utf16)) {
           if (!isValidDomain(match[3]) && !match[3].endsWith(".test")) {
             continue;
           }
-          const start = text2.utf16.indexOf(match[3], match.index) - 1;
+          const start = text.utf16.indexOf(match[3], match.index) - 1;
           facets.push({
             $type: "app.bsky.richtext.facet",
             index: {
-              byteStart: text2.utf16IndexToUtf8Index(start),
-              byteEnd: text2.utf16IndexToUtf8Index(start + match[3].length + 1)
+              byteStart: text.utf16IndexToUtf8Index(start),
+              byteEnd: text.utf16IndexToUtf8Index(start + match[3].length + 1)
             },
             features: [
               {
@@ -53716,7 +53716,7 @@ if (cid) {
       }
       {
         const re = /(^|\s|\()((https?:\/\/[\S]+)|((?<domain>[a-z][a-z0-9]*(\.[a-z0-9]+)+)[\S]*))/gim;
-        while (match = re.exec(text2.utf16)) {
+        while (match = re.exec(text.utf16)) {
           let uri2 = match[2];
           if (!uri2.startsWith("http")) {
             const domain = (_a4 = match.groups) == null ? void 0 : _a4.domain;
@@ -53725,7 +53725,7 @@ if (cid) {
             }
             uri2 = `https://${uri2}`;
           }
-          const start = text2.utf16.indexOf(match[2], match.index);
+          const start = text.utf16.indexOf(match[2], match.index);
           const index = { start, end: start + match[2].length };
           if (/[.,;:!?]$/.test(uri2)) {
             uri2 = uri2.slice(0, -1);
@@ -53737,8 +53737,8 @@ if (cid) {
           }
           facets.push({
             index: {
-              byteStart: text2.utf16IndexToUtf8Index(index.start),
-              byteEnd: text2.utf16IndexToUtf8Index(index.end)
+              byteStart: text.utf16IndexToUtf8Index(index.start),
+              byteEnd: text.utf16IndexToUtf8Index(index.end)
             },
             features: [
               {
@@ -53751,7 +53751,7 @@ if (cid) {
       }
       {
         const re = /(?:^|\s)(#[^\d\s]\S*)(?=\s)?/g;
-        while (match = re.exec(text2.utf16)) {
+        while (match = re.exec(text.utf16)) {
           let [tag] = match;
           const hasLeadingSpace = /^\s/.test(tag);
           tag = tag.trim().replace(new RegExp("\\p{P}+$", "gu"), "");
@@ -53760,8 +53760,8 @@ if (cid) {
           const index = match.index + (hasLeadingSpace ? 1 : 0);
           facets.push({
             index: {
-              byteStart: text2.utf16IndexToUtf8Index(index),
-              byteEnd: text2.utf16IndexToUtf8Index(index + tag.length)
+              byteStart: text.utf16IndexToUtf8Index(index),
+              byteEnd: text.utf16IndexToUtf8Index(index + tag.length)
             },
             features: [
               {
@@ -53784,8 +53784,8 @@ if (cid) {
       });
     }
     var RichTextSegment = class {
-      constructor(text2, facet) {
-        this.text = text2;
+      constructor(text, facet) {
+        this.text = text;
         this.facet = facet;
       }
       get link() {
@@ -53953,15 +53953,15 @@ if (cid) {
       }
     };
     var facetSort = (a, b) => a.index.byteStart - b.index.byteStart;
-    function entitiesToFacets(text2, entities) {
+    function entitiesToFacets(text, entities) {
       const facets = [];
       for (const ent of entities) {
         if (ent.type === "link") {
           facets.push({
             $type: "app.bsky.richtext.facet",
             index: {
-              byteStart: text2.utf16IndexToUtf8Index(ent.index.start),
-              byteEnd: text2.utf16IndexToUtf8Index(ent.index.end)
+              byteStart: text.utf16IndexToUtf8Index(ent.index.start),
+              byteEnd: text.utf16IndexToUtf8Index(ent.index.end)
             },
             features: [{ $type: "app.bsky.richtext.facet#link", uri: ent.value }]
           });
@@ -53969,8 +53969,8 @@ if (cid) {
           facets.push({
             $type: "app.bsky.richtext.facet",
             index: {
-              byteStart: text2.utf16IndexToUtf8Index(ent.index.start),
-              byteEnd: text2.utf16IndexToUtf8Index(ent.index.end)
+              byteStart: text.utf16IndexToUtf8Index(ent.index.start),
+              byteEnd: text.utf16IndexToUtf8Index(ent.index.end)
             },
             features: [
               { $type: "app.bsky.richtext.facet#mention", did: ent.value }
@@ -55817,7 +55817,7 @@ var require_BlueskyAction = __commonJS({
       __setModuleDefault2(result, mod);
       return result;
     };
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+    var __awaiter2 = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
         return value instanceof P ? value : new P(function(resolve) {
           resolve(value);
@@ -55853,10 +55853,6 @@ var require_BlueskyAction = __commonJS({
       fetch: NodePolyfillAtpAgentFetchHandler_1.NodePolyfillAtpAgentFetchHandler
     });
     var Reference = class {
-      constructor(cid, uri) {
-        this.cid = cid;
-        this.uri = uri;
-      }
       static parse(json) {
         if (json)
           return JSON.parse(json);
@@ -55864,20 +55860,20 @@ var require_BlueskyAction = __commonJS({
     };
     exports2.Reference = Reference;
     var BlueskyAction = class {
-      constructor(service2, identifier2, password2) {
-        this.agent = new api_1.BskyAgent({ service: service2 });
-        this.identifier = identifier2;
-        this.password = password2;
+      constructor(service, identifier, password) {
+        this.agent = new api_1.BskyAgent({ service });
+        this.identifier = identifier;
+        this.password = password;
       }
-      run(text2, replyTo2) {
-        return __awaiter(this, void 0, void 0, function* () {
+      run(text, replyTo) {
+        return __awaiter2(this, void 0, void 0, function* () {
           core2.info("\u2601\uFE0F  Sending BlueSky post");
           yield this.agent.login({ identifier: this.identifier, password: this.password });
           const rt = new api_1.RichText({
-            text: text2
+            text
           });
           yield rt.detectFacets(this.agent);
-          if (replyTo2) {
+          if (replyTo) {
             const request = {
               $type: "app.bsky.feed.post",
               text: rt.text,
@@ -55885,12 +55881,12 @@ var require_BlueskyAction = __commonJS({
               createdAt: (/* @__PURE__ */ new Date()).toISOString(),
               reply: {
                 root: {
-                  cid: replyTo2.cid,
-                  uri: replyTo2.uri
+                  cid: replyTo.cid,
+                  uri: replyTo.uri
                 },
                 parent: {
-                  cid: replyTo2.cid,
-                  uri: replyTo2.uri
+                  cid: replyTo.cid,
+                  uri: replyTo.uri
                 }
               }
             };
@@ -55978,19 +55974,51 @@ var __importStar = exports && exports.__importStar || function(mod) {
   __setModuleDefault(result, mod);
   return result;
 };
+var __awaiter = exports && exports.__awaiter || function(thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function(resolve) {
+      resolve(value);
+    });
+  }
+  return new (P || (P = Promise))(function(resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e2) {
+        reject(e2);
+      }
+    }
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e2) {
+        reject(e2);
+      }
+    }
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var core = __importStar(require_core());
 var BlueskyAction_1 = require_BlueskyAction();
 var Valid_1 = require_Valid();
-var service = (0, Valid_1.Valid)("service").required(core.getInput);
-var identifier = (0, Valid_1.Valid)("identifier").required(core.getInput);
-var password = (0, Valid_1.Valid)("password").required(core.getInput);
-core.setSecret(password);
-var action = new BlueskyAction_1.BlueskyAction(service, identifier, password);
-var text = (0, Valid_1.Valid)("text").required(core.getInput);
-var replyTo = (0, Valid_1.Valid)("replyTo").as(core.getInput, BlueskyAction_1.Reference.parse);
-var reference = action.run(text, replyTo);
-core.setOutput("reference", JSON.stringify(reference));
+function main() {
+  return __awaiter(this, void 0, void 0, function* () {
+    const service = (0, Valid_1.Valid)("service").required(core.getInput);
+    const identifier = (0, Valid_1.Valid)("identifier").required(core.getInput);
+    const password = (0, Valid_1.Valid)("password").required(core.getInput);
+    core.setSecret(password);
+    const action = new BlueskyAction_1.BlueskyAction(service, identifier, password);
+    const text = (0, Valid_1.Valid)("text").required(core.getInput);
+    const replyTo = (0, Valid_1.Valid)("replyTo").as(core.getInput, BlueskyAction_1.Reference.parse);
+    const reference = yield action.run(text, replyTo);
+    core.setOutput("reference", JSON.stringify(reference));
+  });
+}
+main();
 /*! Bundled license information:
 
 undici/lib/fetch/body.js:
