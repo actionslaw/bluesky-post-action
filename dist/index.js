@@ -49920,19 +49920,21 @@ var require_BlueskyAction = __commonJS({
           });
           yield rt.detectFacets(this.agent);
           const uploadMedia = (media2) => __awaiter2(this, void 0, void 0, function* () {
-            const files = yield fs.promises.readdir(media2);
-            return yield Promise.all(files.map((file) => __awaiter2(this, void 0, void 0, function* () {
-              const filePath = `${media2}/${file}`;
-              const mimeType = mime_1.default.getType(file);
-              core2.debug(`\u2601\uFE0F  uploading media ${filePath}`);
-              const blob = yield fs.promises.readFile(filePath);
-              if (!mimeType)
-                throw new Error(`Unsupported media type for upload ${filePath}`);
-              const response = yield this.agent.uploadBlob(blob, {
-                encoding: mimeType
-              });
-              return response.data.blob;
-            })));
+            if (fs.existsSync(media2)) {
+              const files = yield fs.promises.readdir(media2);
+              return yield Promise.all(files.map((file) => __awaiter2(this, void 0, void 0, function* () {
+                const filePath = `${media2}/${file}`;
+                const mimeType = mime_1.default.getType(file);
+                core2.debug(`\u2601\uFE0F  uploading media ${filePath}`);
+                const blob = yield fs.promises.readFile(filePath);
+                if (!mimeType)
+                  throw new Error(`Unsupported media type for upload ${filePath}`);
+                const response = yield this.agent.uploadBlob(blob, {
+                  encoding: mimeType
+                });
+                return response.data.blob;
+              })));
+            }
           });
           const uploads = media ? yield uploadMedia(media) : [];
           if (replyTo) {

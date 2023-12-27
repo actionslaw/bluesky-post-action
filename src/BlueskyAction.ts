@@ -45,27 +45,29 @@ export class BlueskyAction {
 
     await rt.detectFacets(this.agent);
 
-    const uploadMedia: (media: string) => Promise<BlobRef[]> = async (
+    const uploadMedia: (
       media: string,
-    ) => {
-      const files = await fs.promises.readdir(media);
-      return await Promise.all(
-        files.map(async (file) => {
-          const filePath = `${media}/${file}`;
-          const mimeType = mime.getType(file);
+    ) => Promise<BlobRef[] | undefined> = async (media: string) => {
+      if (fs.existsSync(media)) {
+        const files = await fs.promises.readdir(media);
+        return await Promise.all(
+          files.map(async (file) => {
+            const filePath = `${media}/${file}`;
+            const mimeType = mime.getType(file);
 
-          core.debug(`☁️  uploading media ${filePath}`);
-          const blob = await fs.promises.readFile(filePath);
+            core.debug(`☁️  uploading media ${filePath}`);
+            const blob = await fs.promises.readFile(filePath);
 
-          if (!mimeType)
-            throw new Error(`Unsupported media type for upload ${filePath}`);
+            if (!mimeType)
+              throw new Error(`Unsupported media type for upload ${filePath}`);
 
-          const response = await this.agent.uploadBlob(blob, {
-            encoding: mimeType,
-          });
-          return response.data.blob;
-        }),
-      );
+            const response = await this.agent.uploadBlob(blob, {
+              encoding: mimeType,
+            });
+            return response.data.blob;
+          }),
+        );
+      }
     };
 
     const uploads = media ? await uploadMedia(media) : [];
@@ -88,7 +90,7 @@ export class BlueskyAction {
         },
         embed: {
           $type: "app.bsky.embed.images",
-          images: uploads.map((blob) => {
+          images: uploads!.map((blob) => {
             return {
               alt: "",
               image: blob,
@@ -109,7 +111,7 @@ export class BlueskyAction {
         createdAt: new Date().toISOString(),
         embed: {
           $type: "app.bsky.embed.images",
-          images: uploads.map((blob) => {
+          images: uploads!.map((blob) => {
             return {
               alt: "",
               image: blob,
