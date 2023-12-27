@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import { BlobRef, BskyAgent, RichText } from "@atproto/api";
 import * as fs from "fs";
 import mime from "mime";
+import sharp from "sharp";
 
 export type CID = string & { readonly "": unique symbol };
 export type URI = string & { readonly "": unique symbol };
@@ -55,13 +56,17 @@ export class BlueskyAction {
             const filePath = `${media}/${file}`;
             const mimeType = mime.getType(file);
 
-            core.debug(`☁️  uploading media ${filePath}`);
-            const blob = await fs.promises.readFile(filePath);
-
             if (!mimeType)
               throw new Error(`Unsupported media type for upload ${filePath}`);
 
-            const response = await this.agent.uploadBlob(blob, {
+            core.debug(`☁️  uploading media ${filePath}`);
+            const blob = await fs.promises.readFile(filePath);
+
+            const optimised = await sharp(blob)
+              .resize(1400, undefined, { withoutEnlargement: true })
+              .toBuffer();
+
+            const response = await this.agent.uploadBlob(optimised, {
               encoding: mimeType,
             });
             return response.data.blob;
