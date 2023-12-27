@@ -45,9 +45,9 @@ export class BlueskyAction {
 
     await rt.detectFacets(this.agent);
 
-    const uploadMedia: (
+    const uploadMedia: (media: string) => Promise<BlobRef[]> = async (
       media: string,
-    ) => Promise<BlobRef[] | undefined> = async (media: string) => {
+    ) => {
       if (fs.existsSync(media)) {
         const files = await fs.promises.readdir(media);
         return await Promise.all(
@@ -68,6 +68,7 @@ export class BlueskyAction {
           }),
         );
       }
+      return [];
     };
 
     const uploads = media ? await uploadMedia(media) : [];
@@ -90,7 +91,7 @@ export class BlueskyAction {
         },
         embed: {
           $type: "app.bsky.embed.images",
-          images: uploads!.map((blob) => {
+          images: uploads.map((blob) => {
             return {
               alt: "",
               image: blob,

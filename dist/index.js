@@ -49935,6 +49935,7 @@ var require_BlueskyAction = __commonJS({
                 return response.data.blob;
               })));
             }
+            return [];
           });
           const uploads = media ? yield uploadMedia(media) : [];
           if (replyTo) {
