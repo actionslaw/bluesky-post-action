@@ -13,8 +13,8 @@ inputs:
   password:
     description: User password.
 runs:
-  using: 'node20'
-  main: 'dist/index.js'
+  using: node20
+  main: dist/index.js
 branding:
   icon: edit
   color: blue
