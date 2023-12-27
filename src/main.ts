@@ -13,8 +13,9 @@ async function main() {
 
   const text = Valid("text").required(core.getInput);
   const replyTo = Valid("replyTo").as(core.getInput, Reference.parse);
+  const media = core.getInput("media");
 
-  const reference = await action.run(text, replyTo);
+  const reference = await action.run(text, replyTo, media);
 
   core.setOutput("reference", JSON.stringify(reference));
 }

@@ -6,6 +6,8 @@ inputs:
     description: The text to post.
   replyto:
     description: Optional CID of the post to reply to.
+  media:
+    description: Optional file path for media to post with.
   service:
     description: AT Protocol service host.
   identifier:

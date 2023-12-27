@@ -1,13 +1,10 @@
 import * as core from "@actions/core";
-import { NodePolyfillAtpAgentFetchHandler } from "./NodePolyfillAtpAgentFetchHandler";
-import { BskyAgent, RichText } from "@atproto/api";
+import { BlobRef, BskyAgent, RichText } from "@atproto/api";
+import * as fs from "fs";
+import mime from "mime";
 
 export type CID = string & { readonly "": unique symbol };
 export type URI = string & { readonly "": unique symbol };
-
-BskyAgent.configure({
-  fetch: NodePolyfillAtpAgentFetchHandler,
-});
 
 export interface Reference {
   readonly cid: CID;
@@ -31,7 +28,11 @@ export class BlueskyAction {
     this.password = password;
   }
 
-  async run(text: string, replyTo: Reference | undefined): Promise<Reference> {
+  async run(
+    text: string,
+    replyTo?: Reference,
+    media?: string,
+  ): Promise<Reference> {
     core.info("☁️  Sending BlueSky post");
     await this.agent.login({
       identifier: this.identifier,
@@ -43,6 +44,31 @@ export class BlueskyAction {
     });
 
     await rt.detectFacets(this.agent);
+
+    const uploadMedia: (media: string) => Promise<BlobRef[]> = async (
+      media: string,
+    ) => {
+      const files = await fs.promises.readdir(media);
+      return await Promise.all(
+        files.map(async (file) => {
+          const filePath = `${media}/${file}`;
+          const mimeType = mime.getType(file);
+
+          core.debug(`☁️  uploading media ${filePath}`);
+          const blob = await fs.promises.readFile(filePath);
+
+          if (!mimeType)
+            throw new Error(`Unsupported media type for upload ${filePath}`);
+
+          const response = await this.agent.uploadBlob(blob, {
+            encoding: mimeType,
+          });
+          return response.data.blob;
+        }),
+      );
+    };
+
+    const uploads = media ? await uploadMedia(media) : [];
 
     if (replyTo) {
       const request = {
@@ -60,6 +86,15 @@ export class BlueskyAction {
             uri: replyTo.uri,
           },
         },
+        embed: {
+          $type: "app.bsky.embed.images",
+          images: uploads.map((blob) => {
+            return {
+              alt: "",
+              image: blob,
+            };
+          }),
+        },
       };
 
       const result = await this.agent.post(request);
@@ -72,6 +107,15 @@ export class BlueskyAction {
         text: rt.text,
         facets: rt.facets,
         createdAt: new Date().toISOString(),
+        embed: {
+          $type: "app.bsky.embed.images",
+          images: uploads.map((blob) => {
+            return {
+              alt: "",
+              image: blob,
+            };
+          }),
+        },
       };
 
       const result = await this.agent.post(request);
