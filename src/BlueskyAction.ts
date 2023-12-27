@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import { BlobRef, BskyAgent, RichText } from "@atproto/api";
 import * as fs from "fs";
 import mime from "mime";
-import sharp from "sharp";
+import Jimp from "jimp";
 
 export type CID = string & { readonly "": unique symbol };
 export type URI = string & { readonly "": unique symbol };
@@ -17,6 +17,8 @@ export class Reference {
     if (json) return JSON.parse(json) as Reference;
   }
 }
+
+const mediaMaxWidth: number = 1000;
 
 export class BlueskyAction {
   private readonly agent: BskyAgent;
@@ -60,11 +62,18 @@ export class BlueskyAction {
               throw new Error(`Unsupported media type for upload ${filePath}`);
 
             core.debug(`☁️  uploading media ${filePath}`);
-            const blob = await fs.promises.readFile(filePath);
 
-            const optimised = await sharp(blob)
-              .resize(1400, undefined, { withoutEnlargement: true })
-              .toBuffer();
+            const blob = await Jimp.read(filePath);
+
+            const resized = async () =>
+              await blob
+                .resize(mediaMaxWidth, Jimp.AUTO)
+                .getBufferAsync(mimeType);
+
+            const optimised: Buffer =
+              blob.bitmap.width > mediaMaxWidth
+                ? await resized()
+                : await blob.getBufferAsync(mimeType);
 
             const response = await this.agent.uploadBlob(optimised, {
               encoding: mimeType,

@@ -1,13 +1,13 @@
 {
   "name": "bluesky-post-action",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Github Action to send posts for the AT Protocol",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && npm run pack",
     "format": "prettier --write **/*.ts",
     "lint": "prettier --check **/*.ts",
-    "pack": "esbuild lib/main.js --outfile=dist/index.js  --bundle --platform=node --external:sharp",
+    "pack": "esbuild lib/main.js --outfile=dist/index.js  --bundle --platform=node",
     "all": "npm run build && npm run format && npm run lint",
     "start": "node --env-file=.env dist/index.js"
   },
@@ -29,11 +29,9 @@
     "@atproto/api": "^0.7.4",
     "@types/node": "^20.10.4",
     "esbuild": "0.19.9",
+    "jimp": "^0.22.10",
     "mime": "^4.0.1",
     "prettier": "^3.1.1",
     "typescript": "^4.8.4"
-  },
-  "dependencies": {
-    "sharp": "^0.33.1"
   }
 }
