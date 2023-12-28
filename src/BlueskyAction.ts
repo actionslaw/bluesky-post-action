@@ -110,6 +110,8 @@ export class BlueskyAction {
     const embed =
       uploads && uploads.length > 0 ? configureEmbed(uploads) : undefined;
 
+    if (embed) core.info(`☁️  Posting with media [${uploads}]`);
+
     if (replyTo) {
       const request = {
         $type: "app.bsky.feed.post",

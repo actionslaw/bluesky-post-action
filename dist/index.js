@@ -86819,6 +86819,8 @@ var require_BlueskyAction = __commonJS({
             };
           };
           const embed = uploads && uploads.length > 0 ? configureEmbed(uploads) : void 0;
+          if (embed)
+            core2.info(`\u2601\uFE0F  Posting with media [${uploads}]`);
           if (replyTo) {
             const request = {
               $type: "app.bsky.feed.post",
