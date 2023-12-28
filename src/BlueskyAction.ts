@@ -85,7 +85,8 @@ export class BlueskyAction {
       return [];
     };
 
-    const uploads = media ? await uploadMedia(media) : undefined;
+    const uploads =
+      media && media.length > 0 ? await uploadMedia(media) : undefined;
 
     const configureEmbed = (blobs: BlobRef[]) => {
       return {

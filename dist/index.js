@@ -86802,7 +86802,7 @@ var require_BlueskyAction = __commonJS({
             }
             return [];
           });
-          const uploads = media ? yield uploadMedia(media) : void 0;
+          const uploads = media && media.length > 0 ? yield uploadMedia(media) : void 0;
           const configureEmbed = (blobs) => {
             return {
               $type: "app.bsky.embed.images",
