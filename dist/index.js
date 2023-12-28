@@ -86802,7 +86802,7 @@ var require_BlueskyAction = __commonJS({
             }
             return [];
           });
-          const uploads = media && media.length > 0 ? yield uploadMedia(media) : void 0;
+          const uploads = media ? yield uploadMedia(media) : void 0;
           const configureEmbed = (blobs) => {
             return {
               $type: "app.bsky.embed.images",
@@ -86814,7 +86814,7 @@ var require_BlueskyAction = __commonJS({
               })
             };
           };
-          const embed = uploads ? configureEmbed(uploads) : void 0;
+          const embed = uploads && uploads.length > 0 ? configureEmbed(uploads) : void 0;
           if (replyTo) {
             const request = {
               $type: "app.bsky.feed.post",

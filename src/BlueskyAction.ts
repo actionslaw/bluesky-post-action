@@ -85,8 +85,7 @@ export class BlueskyAction {
       return [];
     };
 
-    const uploads =
-      media && media.length > 0 ? await uploadMedia(media) : undefined;
+    const uploads = media ? await uploadMedia(media) : undefined;
 
     const configureEmbed = (blobs: BlobRef[]) => {
       return {
@@ -100,7 +99,8 @@ export class BlueskyAction {
       };
     };
 
-    const embed = uploads ? configureEmbed(uploads) : undefined;
+    const embed =
+      uploads && uploads.length > 0 ? configureEmbed(uploads) : undefined;
 
     if (replyTo) {
       const request = {
