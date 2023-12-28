@@ -18,7 +18,7 @@ export class Reference {
   }
 }
 
-const mediaMaxWidth: number = 1000;
+const mediaMaxDimension: number = 900;
 
 export class BlueskyAction {
   private readonly agent: BskyAgent;
@@ -65,13 +65,21 @@ export class BlueskyAction {
 
             const blob = await Jimp.read(filePath);
 
-            const resized = async () =>
-              await blob
-                .resize(mediaMaxWidth, Jimp.AUTO)
-                .getBufferAsync(mimeType);
+            const resized = async () => {
+              if (blob.bitmap.width > mediaMaxDimension) {
+                return await blob
+                  .resize(mediaMaxDimension, Jimp.AUTO)
+                  .getBufferAsync(mimeType);
+              } else {
+                return await blob
+                  .resize(Jimp.AUTO, mediaMaxDimension)
+                  .getBufferAsync(mimeType);
+              }
+            };
 
             const optimised: Buffer =
-              blob.bitmap.width > mediaMaxWidth
+              blob.bitmap.width > mediaMaxDimension ||
+              blob.bitmap.height > mediaMaxDimension
                 ? await resized()
                 : await blob.getBufferAsync(mimeType);
 

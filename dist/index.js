@@ -86762,7 +86762,7 @@ var require_BlueskyAction = __commonJS({
       }
     };
     exports2.Reference = Reference;
-    var mediaMaxWidth = 1e3;
+    var mediaMaxDimension = 900;
     var BlueskyAction = class {
       constructor(service, identifier, password) {
         this.agent = new api_1.BskyAgent({ service });
@@ -86791,9 +86791,13 @@ var require_BlueskyAction = __commonJS({
                 core2.debug(`\u2601\uFE0F  uploading media ${filePath}`);
                 const blob = yield jimp_1.default.read(filePath);
                 const resized = () => __awaiter2(this, void 0, void 0, function* () {
-                  return yield blob.resize(mediaMaxWidth, jimp_1.default.AUTO).getBufferAsync(mimeType);
+                  if (blob.bitmap.width > mediaMaxDimension) {
+                    return yield blob.resize(mediaMaxDimension, jimp_1.default.AUTO).getBufferAsync(mimeType);
+                  } else {
+                    return yield blob.resize(jimp_1.default.AUTO, mediaMaxDimension).getBufferAsync(mimeType);
+                  }
                 });
-                const optimised = blob.bitmap.width > mediaMaxWidth ? yield resized() : yield blob.getBufferAsync(mimeType);
+                const optimised = blob.bitmap.width > mediaMaxDimension || blob.bitmap.height > mediaMaxDimension ? yield resized() : yield blob.getBufferAsync(mimeType);
                 const response = yield this.agent.uploadBlob(optimised, {
                   encoding: mimeType
                 });
