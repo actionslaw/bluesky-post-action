@@ -1,6 +1,6 @@
 {
   "name": "bluesky-post-action",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "Github Action to send posts for the AT Protocol",
   "main": "dist/main.js",
   "scripts": {
@@ -11,11 +11,11 @@
     "all": "npm run build && npm run format && npm run lint",
     "start": "node --env-file=.env dist/index.js"
   },
-  "author": "Ric Wood",
+  "author": "Ric Wood <ric@grislyeye.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rg-wood/atproto-post-action.git"
+    "url": "git+https://github.com/rg-wood/bluesky-post-action.git"
   },
   "keywords": [
     "actions",
