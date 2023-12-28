@@ -85,7 +85,21 @@ export class BlueskyAction {
       return [];
     };
 
-    const uploads = media ? await uploadMedia(media) : [];
+    const uploads = media ? await uploadMedia(media) : undefined;
+
+    const configureEmbed = (blobs: BlobRef[]) => {
+      return {
+        $type: "app.bsky.embed.images",
+        images: blobs.map((blob) => {
+          return {
+            alt: "",
+            image: blob,
+          };
+        }),
+      };
+    };
+
+    const embed = uploads ? configureEmbed(uploads) : undefined;
 
     if (replyTo) {
       const request = {
@@ -103,15 +117,7 @@ export class BlueskyAction {
             uri: replyTo.uri,
           },
         },
-        embed: {
-          $type: "app.bsky.embed.images",
-          images: uploads.map((blob) => {
-            return {
-              alt: "",
-              image: blob,
-            };
-          }),
-        },
+        embed: embed,
       };
 
       const result = await this.agent.post(request);
@@ -124,15 +130,7 @@ export class BlueskyAction {
         text: rt.text,
         facets: rt.facets,
         createdAt: new Date().toISOString(),
-        embed: {
-          $type: "app.bsky.embed.images",
-          images: uploads!.map((blob) => {
-            return {
-              alt: "",
-              image: blob,
-            };
-          }),
-        },
+        embed: embed,
       };
 
       const result = await this.agent.post(request);

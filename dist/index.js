@@ -86802,7 +86802,19 @@ var require_BlueskyAction = __commonJS({
             }
             return [];
           });
-          const uploads = media ? yield uploadMedia(media) : [];
+          const uploads = media ? yield uploadMedia(media) : void 0;
+          const configureEmbed = (blobs) => {
+            return {
+              $type: "app.bsky.embed.images",
+              images: blobs.map((blob) => {
+                return {
+                  alt: "",
+                  image: blob
+                };
+              })
+            };
+          };
+          const embed = uploads ? configureEmbed(uploads) : void 0;
           if (replyTo) {
             const request = {
               $type: "app.bsky.feed.post",
@@ -86819,15 +86831,7 @@ var require_BlueskyAction = __commonJS({
                   uri: replyTo.uri
                 }
               },
-              embed: {
-                $type: "app.bsky.embed.images",
-                images: uploads.map((blob) => {
-                  return {
-                    alt: "",
-                    image: blob
-                  };
-                })
-              }
+              embed
             };
             const result = yield this.agent.post(request);
             core2.info(`\u2601\uFE0F  Sent reply post ${result.cid}:${result.uri}`);
@@ -86838,15 +86842,7 @@ var require_BlueskyAction = __commonJS({
               text: rt.text,
               facets: rt.facets,
               createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-              embed: {
-                $type: "app.bsky.embed.images",
-                images: uploads.map((blob) => {
-                  return {
-                    alt: "",
-                    image: blob
-                  };
-                })
-              }
+              embed
             };
             const result = yield this.agent.post(request);
             core2.info(`\u2601\uFE0F  Sent post ${result.cid}:${result.uri}`);
