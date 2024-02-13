@@ -4,3 +4,4 @@ logs
 __tests__/runner/*
 lib/**/*
 .env
+media

@@ -87361,12 +87361,56 @@ var require_BlueskyAction = __commonJS({
       }
     };
     exports2.Reference = Reference;
+    var MB = 1e6;
     var mediaMaxDimension = 900;
+    var mediaMaxFileSize = 0.976;
+    var mediaMaxResizeRetries = 3;
+    var mediaResizeFactor = 0.9;
     var BlueskyAction = class {
       constructor(service, identifier, password) {
         this.agent = new api_1.BskyAgent({ service });
         this.identifier = identifier;
         this.password = password;
+      }
+      loadBlob(filePath, mimeType, targetWidth = void 0, resizeRetry = 0) {
+        return __awaiter2(this, void 0, void 0, function* () {
+          const blob = yield jimp_1.default.read(filePath);
+          const optimised = targetWidth ? yield blob.resize(targetWidth, jimp_1.default.AUTO).getBufferAsync(mimeType) : yield blob.getBufferAsync(mimeType);
+          const fileSize = optimised.length / MB;
+          if (fileSize < mediaMaxFileSize || resizeRetry >= mediaMaxResizeRetries) {
+            return optimised;
+          } else {
+            const currentWidth = blob.bitmap.width;
+            const newTargetWidth = currentWidth > mediaMaxDimension ? mediaMaxDimension : currentWidth * mediaResizeFactor;
+            core2.debug(`\u2601\uFE0F  ${filePath} too large (width=${currentWidth}, ${fileSize} MB): attempting resize to width ${newTargetWidth} (retry ${resizeRetry + 1})`);
+            return this.loadBlob(filePath, mimeType, newTargetWidth, resizeRetry + 1);
+          }
+        });
+      }
+      uploadFile(filePath) {
+        return __awaiter2(this, void 0, void 0, function* () {
+          core2.debug(`\u2601\uFE0F  uploading media ${filePath}`);
+          const mimeType = mime_1.default.getType(filePath);
+          if (!mimeType)
+            throw new Error(`Unsupported media type for upload ${filePath}`);
+          const blob = yield this.loadBlob(filePath, mimeType);
+          const response = yield this.agent.uploadBlob(blob, {
+            encoding: mimeType
+          });
+          return response.data.blob;
+        });
+      }
+      uploadAllMediaFrom(media) {
+        return __awaiter2(this, void 0, void 0, function* () {
+          if (fs.existsSync(media)) {
+            const files = yield fs.promises.readdir(media);
+            return yield Promise.all(files.map((file) => __awaiter2(this, void 0, void 0, function* () {
+              const filePath = `${media}/${file}`;
+              return yield this.uploadFile(filePath);
+            })));
+          }
+          return [];
+        });
       }
       run(text, replyTo, media) {
         return __awaiter2(this, void 0, void 0, function* () {
@@ -87379,33 +87423,7 @@ var require_BlueskyAction = __commonJS({
             text
           });
           yield rt.detectFacets(this.agent);
-          const uploadMedia = (media2) => __awaiter2(this, void 0, void 0, function* () {
-            if (fs.existsSync(media2)) {
-              const files = yield fs.promises.readdir(media2);
-              return yield Promise.all(files.map((file) => __awaiter2(this, void 0, void 0, function* () {
-                const filePath = `${media2}/${file}`;
-                const mimeType = mime_1.default.getType(file);
-                if (!mimeType)
-                  throw new Error(`Unsupported media type for upload ${filePath}`);
-                core2.debug(`\u2601\uFE0F  uploading media ${filePath}`);
-                const blob = yield jimp_1.default.read(filePath);
-                const resized = () => __awaiter2(this, void 0, void 0, function* () {
-                  if (blob.bitmap.width > mediaMaxDimension) {
-                    return yield blob.resize(mediaMaxDimension, jimp_1.default.AUTO).getBufferAsync(mimeType);
-                  } else {
-                    return yield blob.resize(jimp_1.default.AUTO, mediaMaxDimension).getBufferAsync(mimeType);
-                  }
-                });
-                const optimised = blob.bitmap.width > mediaMaxDimension || blob.bitmap.height > mediaMaxDimension ? yield resized() : yield blob.getBufferAsync(mimeType);
-                const response = yield this.agent.uploadBlob(optimised, {
-                  encoding: mimeType
-                });
-                return response.data.blob;
-              })));
-            }
-            return [];
-          });
-          const uploads = media ? yield uploadMedia(media) : void 0;
+          const uploads = media ? yield this.uploadAllMediaFrom(media) : void 0;
           const configureEmbed = (blobs) => {
             return {
               $type: "app.bsky.embed.images",

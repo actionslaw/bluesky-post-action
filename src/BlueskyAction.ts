@@ -18,7 +18,11 @@ export class Reference {
   }
 }
 
+const MB: number = 1000000;
 const mediaMaxDimension: number = 900;
+const mediaMaxFileSize: number = 0.976;
+const mediaMaxResizeRetries: number = 3;
+const mediaResizeFactor: number = 0.9;
 
 export class BlueskyAction {
   private readonly agent: BskyAgent;
@@ -29,6 +33,63 @@ export class BlueskyAction {
     this.agent = new BskyAgent({ service: service });
     this.identifier = identifier;
     this.password = password;
+  }
+
+  private async loadBlob(
+    filePath: string,
+    mimeType: string,
+    targetWidth: number | undefined = undefined,
+    resizeRetry: number = 0,
+  ): Promise<Buffer> {
+    const blob: Jimp = await Jimp.read(filePath);
+    const optimised = targetWidth
+      ? await blob.resize(targetWidth, Jimp.AUTO).getBufferAsync(mimeType)
+      : await blob.getBufferAsync(mimeType);
+    const fileSize = optimised.length / MB;
+
+    if (fileSize < mediaMaxFileSize || resizeRetry >= mediaMaxResizeRetries) {
+      return optimised;
+    } else {
+      const currentWidth = blob.bitmap.width;
+      const newTargetWidth =
+        currentWidth > mediaMaxDimension
+          ? mediaMaxDimension
+          : currentWidth * mediaResizeFactor;
+
+      core.debug(
+        `☁️  ${filePath} too large (width=${currentWidth}, ${fileSize} MB): attempting resize to width ${newTargetWidth} (retry ${resizeRetry + 1})`,
+      );
+
+      return this.loadBlob(filePath, mimeType, newTargetWidth, resizeRetry + 1);
+    }
+  }
+
+  private async uploadFile(filePath: string): Promise<BlobRef> {
+    core.debug(`☁️  uploading media ${filePath}`);
+    const mimeType = mime.getType(filePath);
+
+    if (!mimeType)
+      throw new Error(`Unsupported media type for upload ${filePath}`);
+
+    const blob = await this.loadBlob(filePath, mimeType);
+    const response = await this.agent.uploadBlob(blob, {
+      encoding: mimeType,
+    });
+
+    return response.data.blob;
+  }
+
+  private async uploadAllMediaFrom(media: string): Promise<BlobRef[]> {
+    if (fs.existsSync(media)) {
+      const files = await fs.promises.readdir(media);
+      return await Promise.all(
+        files.map(async (file) => {
+          const filePath = `${media}/${file}`;
+          return await this.uploadFile(filePath);
+        }),
+      );
+    }
+    return [];
   }
 
   async run(
@@ -48,52 +109,7 @@ export class BlueskyAction {
 
     await rt.detectFacets(this.agent);
 
-    const uploadMedia: (media: string) => Promise<BlobRef[]> = async (
-      media: string,
-    ) => {
-      if (fs.existsSync(media)) {
-        const files = await fs.promises.readdir(media);
-        return await Promise.all(
-          files.map(async (file) => {
-            const filePath = `${media}/${file}`;
-            const mimeType = mime.getType(file);
-
-            if (!mimeType)
-              throw new Error(`Unsupported media type for upload ${filePath}`);
-
-            core.debug(`☁️  uploading media ${filePath}`);
-
-            const blob = await Jimp.read(filePath);
-
-            const resized = async () => {
-              if (blob.bitmap.width > mediaMaxDimension) {
-                return await blob
-                  .resize(mediaMaxDimension, Jimp.AUTO)
-                  .getBufferAsync(mimeType);
-              } else {
-                return await blob
-                  .resize(Jimp.AUTO, mediaMaxDimension)
-                  .getBufferAsync(mimeType);
-              }
-            };
-
-            const optimised: Buffer =
-              blob.bitmap.width > mediaMaxDimension ||
-              blob.bitmap.height > mediaMaxDimension
-                ? await resized()
-                : await blob.getBufferAsync(mimeType);
-
-            const response = await this.agent.uploadBlob(optimised, {
-              encoding: mimeType,
-            });
-            return response.data.blob;
-          }),
-        );
-      }
-      return [];
-    };
-
-    const uploads = media ? await uploadMedia(media) : undefined;
+    const uploads = media ? await this.uploadAllMediaFrom(media) : undefined;
 
     const configureEmbed = (blobs: BlobRef[]) => {
       return {
