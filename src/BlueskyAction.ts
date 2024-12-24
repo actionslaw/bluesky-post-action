@@ -57,7 +57,7 @@ export class BlueskyAction {
           : currentWidth * mediaResizeFactor;
 
       core.debug(
-        `☁️  ${filePath} too large (width=${currentWidth}, ${fileSize} MB): attempting resize to width ${newTargetWidth} (retry ${resizeRetry + 1})`,
+        `🦋  ${filePath} too large (width=${currentWidth}, ${fileSize} MB): attempting resize to width ${newTargetWidth} (retry ${resizeRetry + 1})`,
       );
 
       return this.loadBlob(filePath, mimeType, newTargetWidth, resizeRetry + 1);
@@ -65,7 +65,7 @@ export class BlueskyAction {
   }
 
   private async uploadFile(filePath: string): Promise<BlobRef> {
-    core.debug(`☁️  uploading media ${filePath}`);
+    core.debug(`🦋  uploading media ${filePath}`);
     const mimeType = mime.getType(filePath);
 
     if (!mimeType)
@@ -97,7 +97,7 @@ export class BlueskyAction {
     replyTo?: Reference,
     media?: string,
   ): Promise<Reference> {
-    core.info("☁️  Sending BlueSky post");
+    core.info("🦋  Sending BlueSky post");
     await this.agent.login({
       identifier: this.identifier,
       password: this.password,
@@ -126,7 +126,7 @@ export class BlueskyAction {
     const embed =
       uploads && uploads.length > 0 ? configureEmbed(uploads) : undefined;
 
-    if (embed) core.info(`☁️  Posting with media [${uploads}]`);
+    if (embed) core.info(`🦋  Posting with media [${uploads}]`);
 
     if (replyTo) {
       const request = {
@@ -149,7 +149,7 @@ export class BlueskyAction {
 
       const result = await this.agent.post(request);
 
-      core.info(`☁️  Sent reply post ${result.cid}:${result.uri}`);
+      core.info(`🦋  Sent reply post ${result.cid}:${result.uri}`);
       return result as Reference;
     } else {
       const request = {
@@ -162,7 +162,7 @@ export class BlueskyAction {
 
       const result = await this.agent.post(request);
 
-      core.info(`☁️  Sent post ${result.cid}:${result.uri}`);
+      core.info(`🦋  Sent post ${result.cid}:${result.uri}`);
       return result as Reference;
     }
   }
