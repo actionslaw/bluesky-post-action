@@ -1,6 +1,6 @@
 {
   "name": "bluesky-post-action",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Github Action to send posts for the AT Protocol",
   "main": "dist/main.js",
   "scripts": {
@@ -25,13 +25,14 @@
     "atprotocol"
   ],
   "devDependencies": {
-    "@actions/core": "^1.10.1",
-    "@atproto/api": "^0.9.6",
-    "@types/node": "^20.11.17",
-    "esbuild": "0.20.0",
+    "@actions/core": "^1.11.1",
+    "@atproto/api": "^0.13.23",
+    "@types/node": "^22.10.2",
+    "esbuild": "0.24.2",
     "jimp": "^0.22.10",
-    "mime": "^4.0.1",
-    "typescript": "^4.8.4",
-    "prettier": "^3.2.5"
+    "mime": "^4.0.6",
+    "prettier": "^3.4.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.2"
   }
 }

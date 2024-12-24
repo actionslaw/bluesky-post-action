@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { BlobRef, BskyAgent, RichText } from "@atproto/api";
+import { BlobRef, AtpAgent, RichText } from "@atproto/api";
 import * as fs from "fs";
 import mime from "mime";
 import Jimp from "jimp";
@@ -25,12 +25,12 @@ const mediaMaxResizeRetries: number = 3;
 const mediaResizeFactor: number = 0.9;
 
 export class BlueskyAction {
-  private readonly agent: BskyAgent;
+  private readonly agent: AtpAgent;
   private readonly identifier: string;
   private readonly password: string;
 
   constructor(service: string, identifier: string, password: string) {
-    this.agent = new BskyAgent({ service: service });
+    this.agent = new AtpAgent({ service: service });
     this.identifier = identifier;
     this.password = password;
   }
