@@ -64,7 +64,7 @@ export class BlueskyAction {
     }
   }
 
-  private async uploadFile(filePath: string): Promise<BlobRef> {
+  private async uploadFile(filePath: string): Promise<[BlobRef, string]> {
     core.debug(`🦋  uploading media ${filePath}`);
     const mimeType = mime.getType(filePath);
 
@@ -76,17 +76,30 @@ export class BlueskyAction {
       encoding: mimeType,
     });
 
-    return response.data.blob;
+    const altTextFilePath = `${filePath}.txt`;
+    const alt = fs.existsSync(altTextFilePath)
+      ? fs.readFileSync(altTextFilePath).toString()
+      : "";
+
+    return [response.data.blob, alt];
   }
 
-  private async uploadAllMediaFrom(media: string): Promise<BlobRef[]> {
+  private async uploadAllMediaFrom(
+    media: string,
+  ): Promise<[BlobRef, string][]> {
     if (fs.existsSync(media)) {
       const files = await fs.promises.readdir(media);
       return await Promise.all(
-        files.map(async (file) => {
-          const filePath = `${media}/${file}`;
-          return await this.uploadFile(filePath);
-        }),
+        files
+          .filter((file) => {
+            const filePath = `${media}/${file}`;
+            const mimeType = mime.getType(filePath);
+            return mimeType !== null && mimeType !== "text/plain";
+          })
+          .map(async (file) => {
+            const filePath = `${media}/${file}`;
+            return await this.uploadFile(filePath);
+          }),
       );
     }
     return [];
@@ -111,12 +124,12 @@ export class BlueskyAction {
 
     const uploads = media ? await this.uploadAllMediaFrom(media) : undefined;
 
-    const configureEmbed = (blobs: BlobRef[]) => {
+    const configureEmbed = (blobs: [BlobRef, string][]) => {
       return {
         $type: "app.bsky.embed.images",
-        images: blobs.map((blob) => {
+        images: blobs.map(([blob, alt]) => {
           return {
-            alt: "",
+            alt: alt,
             image: blob,
           };
         }),
